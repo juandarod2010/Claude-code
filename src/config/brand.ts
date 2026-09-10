@@ -55,3 +55,22 @@ export const LANDING_COPY = {
 } as const;
 
 export const REPORT_CTA_LABEL = 'Resolverlo';
+
+/**
+ * Compromisos de servicio. Son promesas COMERCIALES TUYAS, no plazos legales.
+ * Ajústalos a lo que puedas cumplir de verdad antes de publicar.
+ */
+export const SERVICE_COMMITMENTS = {
+  reportDelivery: 'Informe entregado en 24 horas desde el diagnóstico.',
+  resolutionStart:
+    'El alta se inicia con un socio establecido en la Unión Europea en cuanto se confirma el pago.',
+} as const;
+
+/**
+ * Plazo de tramitación ante cada autoridad.
+ * NO se rellena aquí: depende del país y es un dato regulatorio.
+ * El informe lo muestra como pendiente de verificación mientras la base de
+ * reglas no esté verificada. Ver RULES-GUIDE.md.
+ */
+export const AUTHORITY_LEAD_TIME_UNKNOWN =
+  'Plazo de tramitación ante la autoridad: pendiente de verificar en fuente oficial.';
