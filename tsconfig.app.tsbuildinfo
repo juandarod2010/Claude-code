@@ -1,0 +1,1 @@
+{"root":["./src/config/brand.ts","./src/data/rules/index.ts","./src/data/rules/schema.ts","./src/lib/engine/index.ts","./src/lib/engine/types.ts","./src/types/domain.ts","./scripts/rules-check.ts"],"version":"5.6.3"}
