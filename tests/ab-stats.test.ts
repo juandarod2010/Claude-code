@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { buildAbReport, MIN_SAMPLE_PER_VARIANT } from '../src/lib/abStats';
+import { buildAbReport, buildWeeklySeries, MIN_SAMPLE_PER_VARIANT } from '../src/lib/abStats';
 import type { Lead, Prospect, ProspectVariant } from '../src/lib/storage/types';
 
-function prospects(variant: ProspectVariant, total: number, responded: number): Prospect[] {
+function prospects(
+  variant: ProspectVariant,
+  total: number,
+  responded: number,
+  createdAt = '2026-09-09T10:00:00.000Z',
+): Prospect[] {
   return Array.from({ length: total }, (_, i) => ({
-    id: `${variant}-${i}`,
-    createdAt: '2026-09-09T10:00:00.000Z',
+    id: `${variant}-${createdAt}-${i}`,
+    createdAt,
     listingRef: 'B0X',
     country: 'DE',
     missingItems: [],
@@ -122,5 +127,39 @@ describe('comparación A/B', () => {
     const second = buildAbReport(p, []);
     expect(p).toEqual(snapshot);
     expect(first).toEqual(second);
+  });
+});
+
+describe('serie semanal', () => {
+  it('11. agrupa por semana ISO y ordena de más antigua a más reciente', () => {
+    const series = buildWeeklySeries([
+      ...prospects('A', 2, 1, '2026-09-09T10:00:00.000Z'),
+      ...prospects('A', 2, 0, '2026-09-02T10:00:00.000Z'),
+    ]);
+    expect(series.map((p) => p.week)).toEqual(['2026-W36', '2026-W37']);
+    expect(series[0].A.rate).toBe(0);
+    expect(series[1].A.rate).toBe(0.5);
+  });
+
+  it('12. separa las dos variantes dentro de cada semana', () => {
+    const series = buildWeeklySeries([
+      ...prospects('A', 4, 2, '2026-09-09T10:00:00.000Z'),
+      ...prospects('B', 2, 0, '2026-09-09T10:00:00.000Z'),
+    ]);
+    expect(series).toHaveLength(1);
+    expect(series[0].A).toEqual({ sent: 4, responded: 2, rate: 0.5 });
+    expect(series[0].B).toEqual({ sent: 2, responded: 0, rate: 0 });
+  });
+
+  it('13. no inventa semanas vacías: parecería que la respuesta se hundió', () => {
+    const series = buildWeeklySeries([
+      ...prospects('A', 1, 1, '2026-08-03T10:00:00.000Z'),
+      ...prospects('A', 1, 1, '2026-09-09T10:00:00.000Z'),
+    ]);
+    expect(series).toHaveLength(2);
+  });
+
+  it('14. sin datos devuelve una serie vacía', () => {
+    expect(buildWeeklySeries([])).toEqual([]);
   });
 });

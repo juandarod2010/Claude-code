@@ -3,6 +3,7 @@ import type { ObligationRule } from '../../data/rules/schema';
 import type { DiagnosticAnswers } from '../../types/domain';
 import type { EngineResult } from '../engine/types';
 import { buildReportReference } from '../reportReference';
+import { buildVersion, type RuleVersion } from '../rulesHistory';
 import type {
   AppealDetails,
   Lead,
@@ -58,6 +59,15 @@ interface ProspectRow {
   responded: boolean | null;
 }
 
+interface RuleVersionRow {
+  id: string;
+  rule_id: string;
+  changed_at: string;
+  change_type: RuleVersion['changeType'];
+  payload: ObligationRule;
+  changes: RuleVersion['changes'];
+}
+
 interface RuleRow {
   id: string;
   updated_at: string;
@@ -101,6 +111,15 @@ const toProspect = (r: ProspectRow): Prospect => ({
 
 const toRule = (r: RuleRow): StoredRule => ({ ...r.payload, updatedAt: r.updated_at });
 
+const toVersion = (r: RuleVersionRow): RuleVersion => ({
+  id: r.id,
+  ruleId: r.rule_id,
+  changedAt: r.changed_at,
+  changeType: r.change_type,
+  payload: r.payload,
+  changes: r.changes ?? [],
+});
+
 function fail(context: string, error: { message: string } | null): void {
   if (error) throw new Error(`Supabase (${context}): ${error.message}`);
 }
@@ -111,6 +130,26 @@ export function createSupabaseStorage(db: SupabaseClient): Storage {
     const { data, error } = await db.from('leads').insert(row).select().single();
     fail('createLead', error);
     return toLead(data as LeadRow);
+  }
+
+  /** Anota una entrada en el historial de la base de reglas. */
+  async function recordVersion(
+    before: ObligationRule | null,
+    after: ObligationRule | null,
+    changedAt: string,
+  ): Promise<void> {
+    const version = buildVersion(crypto.randomUUID(), changedAt, before, after);
+    if (!version) return;
+    const { error } = await db.from('reglas_historial').insert({
+      id: version.id,
+      rule_id: version.ruleId,
+      changed_at: version.changedAt,
+      change_type: version.changeType,
+      payload: version.payload,
+      changes: version.changes,
+    });
+    // Que falle el historial no puede impedir guardar la obligación.
+    if (error) console.warn(`[complyo] No se pudo anotar el historial: ${error.message}`);
   }
 
   async function updateLeadRow(id: string, row: Record<string, unknown>): Promise<Lead | null> {
@@ -275,18 +314,40 @@ export function createSupabaseStorage(db: SupabaseClient): Storage {
     },
 
     async saveStoredRule(rule: ObligationRule) {
+      // Se lee el estado anterior para poder anotar QUÉ cambió, no solo que
+      // hubo un cambio: es lo que se le cuenta después al suscriptor.
+      const previous = await db.from('reglas').select('payload').eq('id', rule.id).maybeSingle();
+      const before = (previous.data as { payload: ObligationRule } | null)?.payload ?? null;
+
+      const now = new Date().toISOString();
       const { data, error } = await db
         .from('reglas')
-        .upsert({ id: rule.id, payload: rule, updated_at: new Date().toISOString() })
+        .upsert({ id: rule.id, payload: rule, updated_at: now })
         .select()
         .single();
       fail('saveStoredRule', error);
+
+      await recordVersion(before, rule, now);
       return toRule(data as RuleRow);
     },
 
     async deleteStoredRule(id) {
+      const previous = await db.from('reglas').select('payload').eq('id', id).maybeSingle();
+      const before = (previous.data as { payload: ObligationRule } | null)?.payload ?? null;
+
       const { error } = await db.from('reglas').delete().eq('id', id);
       fail('deleteStoredRule', error);
+
+      if (before) await recordVersion(before, null, new Date().toISOString());
+    },
+
+    async listRuleVersions() {
+      const { data, error } = await db
+        .from('reglas_historial')
+        .select('*')
+        .order('changed_at', { ascending: false });
+      fail('listRuleVersions', error);
+      return (data as RuleVersionRow[]).map(toVersion);
     },
   };
 }

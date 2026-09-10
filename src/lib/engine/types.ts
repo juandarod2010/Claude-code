@@ -38,6 +38,19 @@ export interface EngineResult {
     representativeGapCountries: CountryCode[];
     /** true si TODA la base usada está sin verificar. El informe no es publicable. */
     allUnverified: boolean;
+    /**
+     * Países que el vendedor seleccionó y para los que NO hay ninguna
+     * obligación en la base. No significa que no tenga obligaciones allí:
+     * significa que todavía no las hemos cargado. El informe tiene que decirlo
+     * así, porque lo contrario se lee como «en ese país no tienes que hacer
+     * nada», que es justo lo que no sabemos.
+     */
+    countriesNotLoaded: CountryCode[];
+    /**
+     * Países cargados en los que ninguna obligación aplica a lo que vende.
+     * Aquí sí hemos mirado: no le aplica nada de lo que tenemos.
+     */
+    countriesWithoutMatches: CountryCode[];
   };
   /** Avisos para el operador (no para el cliente), p. ej. país sin reglas cargadas. */
   warnings: string[];

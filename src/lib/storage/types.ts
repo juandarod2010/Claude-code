@@ -1,4 +1,5 @@
 import type { ObligationRule } from '../../data/rules/schema';
+import type { RuleVersion } from '../rulesHistory';
 import type { DiagnosticAnswers } from '../../types/domain';
 import type { EngineResult } from '../engine/types';
 
@@ -132,6 +133,8 @@ export interface Storage {
   setProspectResponded(id: string, responded: boolean): Promise<Prospect | null>;
 
   listStoredRules(): Promise<StoredRule[]>;
+  /** Historial de cambios de la base de reglas, de más reciente a más antiguo. */
+  listRuleVersions(): Promise<RuleVersion[]>;
   saveStoredRule(rule: ObligationRule): Promise<StoredRule>;
   deleteStoredRule(id: string): Promise<void>;
 }

@@ -198,3 +198,35 @@ describe('motor de reglas', () => {
     expect(result.summary.allUnverified).toBe(true);
   });
 });
+
+describe('cobertura por país', () => {
+  it('22. distingue un país sin reglas cargadas de uno donde nada aplica', () => {
+    const result = evaluate(
+      answers({ countries: ['DE', 'FR', 'ES'], categories: ['textil'] }),
+      [
+        // Alemania: cargada y aplica (textil activa envases).
+        rule('DE', 'envases'),
+        // Francia: cargada, pero solo con un flujo que el textil no activa.
+        rule('FR', 'aparatos_electricos'),
+        // España: no hay nada cargado.
+      ],
+    );
+
+    expect(result.summary.countriesNotLoaded).toEqual(['ES']);
+    expect(result.summary.countriesWithoutMatches).toEqual(['FR']);
+    expect(result.countries.map((c) => c.country)).toEqual(['DE']);
+  });
+
+  it('23. el aviso de país no cargado deja claro que no es una respuesta', () => {
+    const result = evaluate(answers({ countries: ['PL'] }), [rule('DE', 'envases')]);
+    const warning = result.warnings.join(' ');
+    expect(warning).toContain('Polonia');
+    expect(warning).toContain('no las hemos verificado');
+  });
+
+  it('24. con la base completa para lo que vende, no hay huecos', () => {
+    const result = evaluate(answers({ countries: ['DE'] }), [rule('DE', 'envases')]);
+    expect(result.summary.countriesNotLoaded).toEqual([]);
+    expect(result.summary.countriesWithoutMatches).toEqual([]);
+  });
+});

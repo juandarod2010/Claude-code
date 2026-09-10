@@ -46,7 +46,7 @@ Contraseña del panel interno en desarrollo: `complyo-dev` (o la que pongas en
 | `npm run build` | Compila TypeScript y genera `dist/` |
 | `npm run preview` | Sirve `dist/` para comprobar el build |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest con cobertura (124 tests, mínimo 80 % sobre la lógica) |
+| `npm test` | Vitest con cobertura (146 tests, mínimo 80 % sobre la lógica) |
 | `npm run test:e2e` | Recorrido completo en Chromium contra el build |
 | `npm run rules:check` | Guardarraíl de la base de reglas |
 | `npm run health:check` | Revisa entorno, tablas, reglas, PDF y rutas |
@@ -75,6 +75,7 @@ la fecha en que la leíste.
 | `/admin/poa` | contraseña | Editor del Plan of Action (Track A) |
 | `/admin/ab` | contraseña | Comparación de las variantes A y B |
 | `/admin/fill-rules` | contraseña | Alta de obligaciones + guía de EUR-Lex |
+| `/admin/rules-history` | contraseña | Qué cambió en la base de reglas y cuándo |
 | `/prospeccion` | contraseña | Generador de mensajes A/B |
 
 `/admin` redirige a `/admin/leads`.
@@ -93,6 +94,7 @@ src/
     rulesSource.ts           ← combina reglas del código y de la base de datos
     emailTemplates.ts        ← correos de entrega y de primera respuesta
     abStats.ts               ← comparación A/B (cuenta, no infiere)
+    rulesHistory.ts          ← qué cambió en cada obligación: la vigilancia
     poaDraft.ts              ← borradores del Plan of Action
     reportReference.ts       ← número INFORME-YYYYMMDD-XXXX
   modules/

@@ -21,12 +21,17 @@ SQL Editor → New query → pega y ejecuta, **en este orden**:
 2. `supabase/migrations/0002_fase2.sql`
 3. `supabase/migrations/0003_avisos.sql` (opcional, ver la sección «Aviso de
    lead nuevo» más abajo)
+4. `supabase/migrations/0004_historial_reglas.sql`
 
 La segunda y la tercera son idempotentes: se pueden volver a ejecutar sin
 romper nada.
 
-Comprueba en Table Editor que existen cuatro tablas: `leads`, `informes`,
-`prospectos` y `reglas`.
+Comprueba en Table Editor que existen las tablas: `leads`, `informes`,
+`prospectos`, `reglas` y `reglas_historial`.
+
+`reglas_historial` no admite UPDATE ni DELETE para nadie, a propósito: un
+historial que se puede reescribir no sirve como historial. Si hay que corregir
+algo, se anota otra entrada.
 
 ## 3. Copiar las claves
 

@@ -107,7 +107,7 @@ export default function InformePage() {
 
           {/* 1 */}
           <Section n={1} title="Situación actual, país por país">
-            {result.countries.length === 0 && (
+            {result.countries.length === 0 && result.summary.countriesNotLoaded.length === 0 && (
               <p className="text-sm text-slate-600">
                 No se han identificado obligaciones con los datos facilitados.
               </p>
@@ -131,6 +131,21 @@ export default function InformePage() {
                 </div>
               ))}
             </div>
+            {result.summary.countriesNotLoaded.length > 0 && (
+              <div className="mt-4 rounded-xl border border-amber-400 bg-amber-50 p-4">
+                <UnverifiedBadge />
+                <p className="mt-2 text-sm font-semibold text-amber-900">
+                  Pendiente de cubrir:{' '}
+                  {result.summary.countriesNotLoaded.map((c) => COUNTRY_LABELS[c]).join(', ')}
+                </p>
+                <p className="mt-1 text-sm text-amber-900">
+                  Todavía no hemos cargado las obligaciones de{' '}
+                  {result.summary.countriesNotLoaded.length === 1 ? 'este país' : 'estos países'}.
+                  Que no aparezcan aquí <strong>no significa que no tengas obligaciones allí</strong>:
+                  significa que no las hemos verificado y no vamos a decirte algo que no sabemos.
+                </p>
+              </div>
+            )}
           </Section>
 
           {/* 2 */}

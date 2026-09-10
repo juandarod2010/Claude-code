@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
-import { buildAbReport, MIN_SAMPLE_PER_VARIANT, type AbReport, type VariantStats } from '../lib/abStats';
+import {
+  buildAbReport,
+  buildWeeklySeries,
+  MIN_SAMPLE_PER_VARIANT,
+  type AbReport,
+  type VariantStats,
+  type WeeklyPoint,
+} from '../lib/abStats';
 import { storage } from '../lib/storage';
 import { VARIANT_DESCRIPTION } from '../lib/prospecting/templates';
 
 /** Comparación de las variantes A y B: prospección y conversión. */
 export default function AdminAbPage() {
   const [report, setReport] = useState<AbReport | null>(null);
+  const [series, setSeries] = useState<WeeklyPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([storage.listProspects(), storage.listLeads()])
-      .then(([prospects, leads]) => setReport(buildAbReport(prospects, leads)))
+      .then(([prospects, leads]) => {
+        setReport(buildAbReport(prospects, leads));
+        setSeries(buildWeeklySeries(prospects));
+      })
       .catch((e) => setError(e instanceof Error ? e.message : 'Error al cargar los datos.'));
   }, []);
 
@@ -53,6 +64,8 @@ export default function AdminAbPage() {
             <VariantCard stats={report.B} title={VARIANT_DESCRIPTION.B} />
           </div>
 
+          <WeeklySeries points={series} />
+
           <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
             <p className="font-semibold text-ink">Cómo se alimenta esto</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -73,6 +86,54 @@ export default function AdminAbPage() {
         </>
       )}
     </AdminLayout>
+  );
+}
+
+function WeeklySeries({ points }: { points: WeeklyPoint[] }) {
+  if (points.length === 0) return null;
+
+  const pct = (value: number) => `${Math.round(value * 1000) / 10} %`;
+
+  return (
+    <section className="mt-8">
+      <h2 className="text-lg font-bold">Semana a semana</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        El acumulado esconde lo que más importa: si una variante dejó de funcionar el mes pasado,
+        la media sigue diciendo que va bien. Solo salen las semanas con envíos.
+      </p>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-300 text-left text-slate-500">
+              <th className="py-2 pr-3 font-semibold">Semana</th>
+              <th className="py-2 pr-3 font-semibold">A — enviados</th>
+              <th className="py-2 pr-3 font-semibold">A — respuesta</th>
+              <th className="py-2 pr-3 font-semibold">B — enviados</th>
+              <th className="py-2 font-semibold">B — respuesta</th>
+            </tr>
+          </thead>
+          <tbody>
+            {points.map((point) => (
+              <tr key={point.week} className="border-b border-slate-200">
+                <td className="py-2 pr-3 font-mono text-xs">{point.week}</td>
+                <td className="py-2 pr-3">{point.A.sent}</td>
+                <td className="py-2 pr-3 font-semibold">
+                  {point.A.sent ? pct(point.A.rate) : '—'}
+                </td>
+                <td className="py-2 pr-3">{point.B.sent}</td>
+                <td className="py-2 font-semibold">{point.B.sent ? pct(point.B.rate) : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-3 text-xs text-slate-500">
+        Con pocos envíos por semana, estos porcentajes saltan mucho de una a otra. Míralos como
+        tendencia, no como medición.
+      </p>
+    </section>
   );
 }
 

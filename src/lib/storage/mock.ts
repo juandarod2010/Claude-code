@@ -1,5 +1,6 @@
 import type { ObligationRule } from '../../data/rules/schema';
 import { buildReportReference } from '../reportReference';
+import { buildVersion, type RuleVersion } from '../rulesHistory';
 import type {
   AppealDetails,
   Lead,
@@ -21,6 +22,7 @@ const KEYS = {
   reports: 'complyo.reports',
   prospects: 'complyo.prospects',
   rules: 'complyo.rules',
+  ruleVersions: 'complyo.rule-versions',
 } as const;
 
 function read<T>(key: string): T[] {
@@ -60,6 +62,26 @@ function baseLead(email: string, companyName: string | null): Omit<Lead, 'type' 
     revenue: null,
     notes: [],
   };
+}
+
+/** Anota el cambio en el historial. Sin él, la suscripción de vigilancia no
+ * tiene de dónde salir. */
+function recordVersion(
+  before: ObligationRule | null,
+  after: ObligationRule | null,
+  changedAt: string,
+): void {
+  const version = buildVersion(newId(), changedAt, stripMeta(before), after);
+  if (!version) return;
+  write(KEYS.ruleVersions, [version, ...read<RuleVersion>(KEYS.ruleVersions)]);
+}
+
+/** Quita los metadatos de almacenamiento para comparar solo la obligación. */
+function stripMeta(rule: StoredRule | ObligationRule | null): ObligationRule | null {
+  if (!rule) return null;
+  const { updatedAt: _updatedAt, ...clean } = rule as StoredRule;
+  void _updatedAt;
+  return clean;
 }
 
 function patchLead(id: string, mutate: (lead: Lead) => Lead): Lead | null {
@@ -173,16 +195,27 @@ export const mockStorage: Storage = {
   },
 
   async saveStoredRule(rule: ObligationRule) {
-    const stored: StoredRule = { ...rule, updatedAt: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const previous = read<StoredRule>(KEYS.rules).find((r) => r.id === rule.id) ?? null;
+    const stored: StoredRule = { ...rule, updatedAt: now };
     const list = read<StoredRule>(KEYS.rules).filter((r) => r.id !== rule.id);
     write(KEYS.rules, [stored, ...list]);
+    recordVersion(previous, rule, now);
     return stored;
   },
 
   async deleteStoredRule(id) {
+    const previous = read<StoredRule>(KEYS.rules).find((r) => r.id === id) ?? null;
     write(
       KEYS.rules,
       read<StoredRule>(KEYS.rules).filter((r) => r.id !== id),
+    );
+    if (previous) recordVersion(previous, null, new Date().toISOString());
+  },
+
+  async listRuleVersions() {
+    return read<RuleVersion>(KEYS.ruleVersions).sort((a, b) =>
+      b.changedAt.localeCompare(a.changedAt),
     );
   },
 };

@@ -112,3 +112,19 @@ NEXT-STEPS.md, no en el código.
 | El recorrido de extremo a extremo corre contra el **build**, no contra el servidor de desarrollo | Es lo que se despliega. Las diferencias entre uno y otro son justo las que se escapan |
 | Playwright entra como dependencia de desarrollo, con `PLAYWRIGHT_CHROMIUM_PATH` opcional | Cubre lo que la cobertura de Vitest no puede cubrir. Los fallos que detectó en las fases anteriores (el guion largo del PDF, el 404 del favicon, la sesión que no se cerraba) no los habría visto ninguna prueba de renderizado |
 | El CI separa lógica y recorrido en dos trabajos | El segundo tarda y necesita navegador; que un fallo de lint se vea en veinte segundos y no en tres minutos |
+
+---
+
+# Fase 4 — decisiones
+
+| Decisión | Por qué |
+| --- | --- |
+| El historial distingue cambios **materiales** de mantenimiento interno | Cambiar la periodicidad de declaración afecta a lo que el cliente tiene que hacer; corregir una nota interna o el peso de severidad, no. Avisar de todo entrena al cliente a ignorar tus avisos |
+| `material` es criterio comercial nuestro, no jurídico | Está en una sola tabla, en `rulesHistory.ts`, con nombre y comentario. Si te equivocas al clasificar, se cambia ahí |
+| Guardar una obligación sin cambiar nada **no** genera entrada | Si no, el historial se llena de ruido y deja de servir para lo único que sirve: enseñar qué cambió |
+| El aviso de vigilancia se acota a las obligaciones **de ese informe** | Al cliente no le interesa que haya cambiado Polonia si él solo vende a Alemania. Y mandarle todo hace que no lea ninguno |
+| `reglas_historial` sin UPDATE ni DELETE para nadie, y sin clave ajena contra `reglas` | Un historial reescribible no es un historial; y con clave ajena, borrar una obligación se llevaría por delante justo el registro de su baja |
+| Una baja guarda el último estado conocido completo | Si dentro de un año un cliente pregunta qué decía aquella obligación, hay respuesta |
+| El fallo al anotar el historial **no** impide guardar la obligación | El dato es lo primero; el registro es importante pero secundario. Se avisa por consola |
+| La serie A/B solo pinta semanas con envíos | Rellenar las vacías a cero haría parecer que la respuesta se hundió una semana en la que simplemente no escribiste a nadie |
+| El motor separa «país no cargado» de «nada aplica», y el informe lo dice | Confundirlos le decía al vendedor que no tiene nada que hacer en un país que ni siquiera habíamos mirado. Es el mismo principio que la etiqueta de pendiente de verificación: un hueco nuestro no se disfraza de respuesta |

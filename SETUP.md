@@ -62,6 +62,8 @@ http://localhost:5173
 9. `/admin/ab` — compara las dos variantes.
 10. `/admin/fill-rules` — rellena una obligación con la guía de EUR-Lex al lado.
 11. `/admin/rules-status` — mira cómo sube el contador de 18.
+12. `/admin/rules-history` — cambia una obligación que ya habías guardado y mira
+    cómo queda registrado campo a campo. Eso es lo que vende la vigilancia.
 
 ## 7. Comprobaciones
 

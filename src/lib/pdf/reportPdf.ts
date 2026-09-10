@@ -194,7 +194,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
 
   // ------------------------------------------------ 1. Situación actual
   heading(c, 1, 'Situación actual, país por país');
-  if (result.countries.length === 0) {
+  if (result.countries.length === 0 && result.summary.countriesNotLoaded.length === 0) {
     text(c, 'No se han identificado obligaciones con los datos facilitados.', { size: 10 });
   }
   for (const country of result.countries) {
@@ -208,6 +208,21 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
     );
     if (country.unverifiedCount > 0) unverifiedBanner(c);
     c.y += 1.5;
+  }
+
+  if (result.summary.countriesNotLoaded.length > 0) {
+    const pendientes = result.summary.countriesNotLoaded
+      .map((code) => COUNTRY_LABELS[code as CountryCode])
+      .join(', ');
+    unverifiedBanner(c);
+    text(c, `Pendiente de cubrir: ${pendientes}`, { size: 10, style: 'bold', gap: 1 });
+    text(
+      c,
+      'Todavía no hemos cargado las obligaciones de estos países. Que no aparezcan aquí NO significa ' +
+        'que no tengas obligaciones allí: significa que no las hemos verificado y no vamos a afirmar ' +
+        'algo que no sabemos.',
+      { size: 9, color: BRAND_COLORS.warning, gap: 3 },
+    );
   }
 
   // --------------------------------------- 2. Qué falta y qué lo exige

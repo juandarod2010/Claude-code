@@ -102,6 +102,57 @@ function verdictFor(a: VariantStats, b: VariantStats): Verdict {
   };
 }
 
+export interface WeeklyPoint {
+  /** Semana ISO: 2026-W37. */
+  week: string;
+  A: { sent: number; responded: number; rate: number };
+  B: { sent: number; responded: number; rate: number };
+}
+
+/** Semana ISO de una fecha. Misma función que usa el informe semanal. */
+function isoWeek(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return 'sin fecha';
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNumber = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNumber);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+/**
+ * Evolución semana a semana.
+ *
+ * El acumulado esconde lo que más importa: si una variante dejó de funcionar el
+ * mes pasado, la media sigue diciendo que va bien. Aquí se ve.
+ *
+ * Semanas de más antigua a más reciente. Solo aparecen las que tienen envíos:
+ * pintar semanas vacías a cero haría parecer que la respuesta se hundió.
+ */
+export function buildWeeklySeries(prospects: readonly Prospect[]): WeeklyPoint[] {
+  const byWeek = new Map<string, WeeklyPoint>();
+
+  for (const prospect of prospects) {
+    const week = isoWeek(prospect.createdAt);
+    const point =
+      byWeek.get(week) ??
+      ({ week, A: { sent: 0, responded: 0, rate: 0 }, B: { sent: 0, responded: 0, rate: 0 } } as WeeklyPoint);
+    const side = point[prospect.variant];
+    side.sent += 1;
+    if (prospect.responded) side.responded += 1;
+    byWeek.set(week, point);
+  }
+
+  return [...byWeek.values()]
+    .map((point) => ({
+      ...point,
+      A: { ...point.A, rate: point.A.sent ? point.A.responded / point.A.sent : 0 },
+      B: { ...point.B, rate: point.B.sent ? point.B.responded / point.B.sent : 0 },
+    }))
+    .sort((a, b) => a.week.localeCompare(b.week));
+}
+
 /** Función pura: mismos datos, mismo informe. */
 export function buildAbReport(prospects: readonly Prospect[], leads: readonly Lead[]): AbReport {
   const A = statsFor('A', prospects, leads);

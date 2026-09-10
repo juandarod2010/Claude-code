@@ -236,6 +236,34 @@ test.describe('Panel interno', () => {
     expect((await descarga).suggestedFilename()).toBe('poa-tienda-prueba.json');
   });
 
+  test('el historial recoge el alta y el cambio de una obligación', async ({ page }) => {
+    await entrarEnAdmin(page, '/admin/fill-rules');
+
+    await page.getByLabel(/Nombre del registro/).fill('Registro inicial');
+    await page.getByLabel(/Periodicidad/).fill('anual');
+    await page.getByLabel(/Datos que exige/).fill('Número de identificación fiscal');
+    await page.getByLabel(/Consecuencia/).fill('Consecuencia documentada en la fuente.');
+    await page
+      .getByLabel(/URL de la fuente/)
+      .fill('https://eur-lex.europa.eu/legal-content/ES/TXT/?uri=CELEX:32025R0040');
+    await page.getByRole('button', { name: 'Guardar' }).click();
+    await expect(page.locator('body')).toContainText('Guardada la obligación');
+
+    // Se edita y se vuelve a guardar: debe quedar una modificación con el campo.
+    await page.getByRole('button', { name: 'Editar' }).first().click();
+    await page.getByLabel(/Periodicidad/).fill('trimestral');
+    await page.getByRole('button', { name: 'Guardar' }).click();
+    await expect(page.locator('body')).toContainText('Guardada la obligación');
+
+    await page.goto('/admin/rules-history');
+    const historial = page.locator('body');
+    await expect(historial).toContainText('Alta');
+    await expect(historial).toContainText('Modificación');
+    await expect(historial).toContainText('Periodicidad de declaración');
+    await expect(historial).toContainText('anual');
+    await expect(historial).toContainText('trimestral');
+  });
+
   test('la sesión se cierra al salir', async ({ page }) => {
     await entrarEnAdmin(page);
     await expect(page.locator('body')).toContainText('operador (local)');

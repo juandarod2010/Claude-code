@@ -115,13 +115,25 @@ export function evaluate(
   const nonEstablished = !answers.establishedInEU;
 
   const applied: AppliedObligation[] = [];
+  const countriesNotLoaded: CountryCode[] = [];
+  const countriesWithoutMatches: CountryCode[] = [];
 
   for (const country of countries) {
     const countryRules = rules.filter((r) => r.country === country);
+
+    // Distinguir estos dos casos importa: uno es un hueco NUESTRO y el otro es
+    // una respuesta. Confundirlos le diría al vendedor que no tiene nada que
+    // hacer en un país que ni siquiera hemos mirado.
     if (countryRules.length === 0) {
-      warnings.push(`No hay obligaciones cargadas para ${COUNTRY_LABELS[country] ?? country}.`);
+      countriesNotLoaded.push(country);
+      warnings.push(
+        `${COUNTRY_LABELS[country] ?? country}: no hay ninguna obligación cargada en la base. ` +
+          'No es que no tenga obligaciones: es que todavía no las hemos verificado.',
+      );
       continue;
     }
+
+    const before = applied.length;
 
     for (const rule of countryRules) {
       const triggeringCategories = streamMap.get(rule.stream);
@@ -163,6 +175,14 @@ export function evaluate(
         representativeGap,
         verified: rule.verified,
       });
+    }
+
+    if (applied.length === before) {
+      countriesWithoutMatches.push(country);
+      warnings.push(
+        `${COUNTRY_LABELS[country] ?? country}: hay obligaciones cargadas, pero ninguna aplica a ` +
+          'las categorías declaradas.',
+      );
     }
   }
 
@@ -213,6 +233,8 @@ export function evaluate(
         ...new Set(applied.filter((o) => o.representativeGap).map((o) => o.rule.country)),
       ],
       allUnverified: applied.length > 0 && unverifiedCount === applied.length,
+      countriesNotLoaded,
+      countriesWithoutMatches,
     },
     warnings,
   };

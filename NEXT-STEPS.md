@@ -85,15 +85,18 @@ Ninguna está en el código.
   envías tú).
 - Cobro del informe y del análisis de apelación (enlace de pago externo pegado
   en el botón, sin integración).
-- ~~Panel de tasa de respuesta A/B~~ **Hecho** (`/admin/ab`). Lo que queda sería
-  la serie temporal: hoy compara el acumulado, no la evolución semana a semana.
+- ~~Panel de tasa de respuesta A/B, con serie temporal~~ **Hecho**
+  (`/admin/ab`): acumulado y evolución semana a semana.
 - ~~Editor del Plan of Action~~ **Hecho** (`/admin/poa`). Prellena desde el lead,
   puntúa lo completo que está el plan, dice qué falta y saca el documento en
   Markdown, texto plano y JSON.
-- Historial de versiones de la base de reglas, para decirle a un cliente qué
-  cambió desde su último informe. Es el argumento natural de la suscripción de
-  vigilancia.
-- Versión del informe en inglés, para socios que no hablan español.
+- ~~Historial de versiones de la base de reglas~~ **Hecho**
+  (`/admin/rules-history`). Registra cada alta, cambio y baja campo a campo,
+  distingue lo que afecta al cliente de lo que es mantenimiento interno, y
+  genera el aviso de vigilancia acotado a las obligaciones que salían en el
+  informe de ese cliente. Es la sustancia de la suscripción de 39 $/mes.
+- Versión del informe en inglés, para socios que no hablan español. (En la fase 1
+  pediste expresamente nada de multiidioma; sigue sin construirse.)
 - Más países y más flujos: el esquema y el motor los soportan sin cambios.
 - Un caso por país en los tests del motor, cuando la base de reglas sea real.
 
@@ -119,6 +122,7 @@ Ninguna está en el código.
 - **La cobertura de tests mide la lógica, no las pantallas.** Las pantallas las
   cubre `npm run test:e2e`, que ya está en el repositorio y en el CI: nueve
   recorridos en Chromium contra el build.
-- **El motor no distingue** entre «no hay obligación en ese país» y «ese país no
-  está cargado todavía»: lo segundo sale como aviso al operador, no al cliente.
-  Revísalo cuando la base esté completa.
+- ~~El motor no distingue «no hay obligación» de «ese país no está cargado»~~
+  **Resuelto**: ahora lo separa, y el informe (pantalla y PDF) lo dice en claro
+  al cliente — «que no aparezca aquí no significa que no tengas obligaciones
+  allí». Lo contrario se leía como una respuesta cuando era un hueco nuestro.

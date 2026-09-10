@@ -12,6 +12,7 @@ const LINKS = [
   { to: '/admin/ab', label: 'A/B' },
   { to: '/admin/rules-status', label: 'Estado de reglas' },
   { to: '/admin/fill-rules', label: 'Rellenar reglas' },
+  { to: '/admin/rules-history', label: 'Historial' },
 ];
 
 /** Marco común de las pantallas internas: portero + navegación. */
