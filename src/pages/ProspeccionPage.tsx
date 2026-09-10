@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import AdminGate from '../components/AdminGate';
-import { BRAND } from '../config/brand';
+import AdminLayout from '../components/AdminLayout';
 import {
   buildMessage,
   MISSING_ITEMS,
@@ -19,11 +17,7 @@ import { COUNTRIES, COUNTRY_LABELS, type CountryCode } from '../types/domain';
  * qué falta. La herramienta solo redacta el mensaje y registra la variante.
  */
 export default function ProspeccionPage() {
-  return (
-    <AdminGate>
-      <ProspeccionContent />
-    </AdminGate>
-  );
+  return <ProspeccionContent />;
 }
 
 function ProspeccionContent() {
@@ -95,16 +89,9 @@ function ProspeccionContent() {
   }
 
   return (
-    <div className="min-h-screen px-5 py-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">{BRAND.name} · prospección</h1>
-          <Link to="/admin" className="btn-secondary">
-            Volver a leads
-          </Link>
-        </div>
-
-        <p className="mt-3 max-w-2xl text-sm text-slate-600">
+    <AdminLayout title="Prospección">
+      <div>
+        <p className="max-w-2xl text-sm text-slate-600">
           Abre la ficha a mano en el navegador, pega aquí la URL o el ASIN y marca qué falta. Esta
           herramienta no consulta ningún marketplace: solo redacta el mensaje.
         </p>
@@ -228,7 +215,8 @@ function ProspeccionContent() {
                   <th className="py-2 pr-3 font-semibold">Ficha</th>
                   <th className="py-2 pr-3 font-semibold">País</th>
                   <th className="py-2 pr-3 font-semibold">Variante</th>
-                  <th className="py-2 font-semibold">Qué faltaba</th>
+                  <th className="py-2 pr-3 font-semibold">Qué faltaba</th>
+                  <th className="py-2 font-semibold">¿Respondió?</th>
                 </tr>
               </thead>
               <tbody>
@@ -242,12 +230,26 @@ function ProspeccionContent() {
                       {COUNTRY_LABELS[p.country as CountryCode] ?? p.country}
                     </td>
                     <td className="py-2 pr-3 font-semibold">{p.variant}</td>
-                    <td className="py-2">{p.missingItems.length}</td>
+                    <td className="py-2 pr-3">{p.missingItems.length}</td>
+                    <td className="py-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={p.responded}
+                        aria-label={`Respondió ${p.listingRef}`}
+                        onChange={async (e) => {
+                          const updated = await storage.setProspectResponded(p.id, e.target.checked);
+                          if (updated) {
+                            setProspects((list) => list.map((x) => (x.id === updated.id ? updated : x)));
+                          }
+                        }}
+                      />
+                    </td>
                   </tr>
                 ))}
                 {prospects.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-500">
+                    <td colSpan={6} className="py-6 text-center text-slate-500">
                       Todavía no has registrado ningún prospecto.
                     </td>
                   </tr>
@@ -257,7 +259,7 @@ function ProspeccionContent() {
           </div>
         </section>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

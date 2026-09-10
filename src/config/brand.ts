@@ -74,3 +74,21 @@ export const SERVICE_COMMITMENTS = {
  */
 export const AUTHORITY_LEAD_TIME_UNKNOWN =
   'Plazo de tramitación ante la autoridad: pendiente de verificar en fuente oficial.';
+
+/**
+ * TRACK A — Apelaciones de cuentas y listings suspendidos en Amazon.
+ */
+export const APPEALS = {
+  analysisPrice: { amount: 1500, currency: 'USD', label: '1.500 $' },
+  /**
+   * Tasa de éxito publicada.
+   *
+   * DELIBERADAMENTE VACÍA. Publicar "90 % de éxito" sin haber cerrado casos es
+   * exactamente el tipo de cifra que no se puede demostrar, y en la página de
+   * apelaciones se lo estarías diciendo a alguien que está perdiendo dinero
+   * cada día. Cuando tengas casos cerrados, pon aquí el número real y el
+   * tamaño de la muestra: `{ rate: 0.9, sampleSize: 20, since: '2026-09' }`.
+   * Mientras sea null, la página no enseña ninguna cifra. Ver DECISIONS.md.
+   */
+  successRate: null as { rate: number; sampleSize: number; since: string } | null,
+} as const;
