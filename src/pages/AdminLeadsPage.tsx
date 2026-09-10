@@ -12,7 +12,8 @@ import {
   type Prospect,
   type Report,
 } from '../lib/storage';
-import { buildDiagnosisEmail } from '../lib/emailTemplates';
+import { buildAppealReplyEmail, buildDiagnosisEmail } from '../lib/emailTemplates';
+import { analyzeSuspensionEmail } from '../modules/appeals/analyzer';
 import { COUNTRIES, COUNTRY_LABELS, type CountryCode } from '../types/domain';
 
 /** Panel de leads: filtros, búsqueda, estado, ingresos y notas. */
@@ -22,6 +23,7 @@ export default function AdminLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openLead, setOpenLead] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const [prospects, setProspects] = useState<Prospect[]>([]);
 
   const [country, setCountry] = useState<CountryCode | ''>('');
@@ -85,6 +87,25 @@ export default function AdminLeadsPage() {
       revenue,
     };
   }, [filtered]);
+
+  /** Copia al portapapeles el correo que toca según el tipo de lead. */
+  function copyEmail(lead: Lead, reference?: string) {
+    const mail =
+      lead.type === 'appeal'
+        ? buildAppealReplyEmail({
+            name: lead.companyName,
+            suspensionTypeLabel: lead.appeal?.suspensionTypeLabel ?? 'Sin clasificar',
+            // Los próximos pasos se recalculan del relato: no se guardan porque
+            // el analizador puede mejorar y el consejo debe ir con él.
+            nextSteps: analyzeSuspensionEmail(lead.appeal?.story ?? '').nextSteps,
+          })
+        : buildDiagnosisEmail({ name: lead.companyName, reference: reference ?? '' });
+
+    navigator.clipboard
+      .writeText(`${mail.subject}\n\n${mail.body}`)
+      .then(() => setCopied(lead.id))
+      .catch(() => setError('El navegador ha bloqueado el portapapeles.'));
+  }
 
   function replaceLead(updated: Lead | null) {
     if (!updated) return;
@@ -282,27 +303,19 @@ export default function AdminLeadsPage() {
                     </td>
                     <td className="py-2 whitespace-nowrap">
                       {report && (
-                        <>
-                          <Link className="text-brand-600 underline" to={`/informe/${report.id}`}>
-                            Informe
-                          </Link>
-                          <button
-                            type="button"
-                            className="ml-3 text-brand-600 underline"
-                            title="Copia el correo de entrega del diagnóstico, listo para pegar"
-                            onClick={() => {
-                              const mail = buildDiagnosisEmail({
-                                name: lead.companyName,
-                                reference: report.reference,
-                              });
-                              navigator.clipboard
-                                .writeText(`${mail.subject}\n\n${mail.body}`)
-                                .catch(() => setError('El navegador ha bloqueado el portapapeles.'));
-                            }}
-                          >
-                            Correo
-                          </button>
-                        </>
+                        <Link className="text-brand-600 underline" to={`/informe/${report.id}`}>
+                          Informe
+                        </Link>
+                      )}
+                      {(lead.type === 'appeal' || report) && (
+                        <button
+                          type="button"
+                          className="ml-3 text-brand-600 underline"
+                          title="Copia el correo que toca para este lead, listo para pegar"
+                          onClick={() => copyEmail(lead, report?.reference)}
+                        >
+                          {copied === lead.id ? 'Copiado' : 'Correo'}
+                        </button>
                       )}
                       <button
                         type="button"

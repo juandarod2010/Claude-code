@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ObligationRule } from '../../data/rules/schema';
 import type { DiagnosticAnswers } from '../../types/domain';
 import type { EngineResult } from '../engine/types';
@@ -105,8 +105,7 @@ function fail(context: string, error: { message: string } | null): void {
   if (error) throw new Error(`Supabase (${context}): ${error.message}`);
 }
 
-export function createSupabaseStorage(url: string, anonKey: string): Storage {
-  const db: SupabaseClient = createClient(url, anonKey);
+export function createSupabaseStorage(db: SupabaseClient): Storage {
 
   async function insertLead(row: Record<string, unknown>): Promise<Lead> {
     const { data, error } = await db.from('leads').insert(row).select().single();

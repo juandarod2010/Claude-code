@@ -51,6 +51,7 @@ Contraseña del panel interno en desarrollo: `complyo-dev` (o la que pongas en
 | `npm run health:check` | Revisa entorno, tablas, reglas, PDF y rutas |
 | `npm run report:weekly` | Genera `reports/weekly-YYYY-WW.json` |
 | `npm run backup:rules` | Vuelca la base de reglas a `backups/` |
+| `npm run predeploy:check` | Revisa lo que se suele olvidar antes de desplegar |
 | `npm run deploy` | `vercel deploy --prod` (requiere la CLI de Vercel) |
 
 ### `npm run rules:check` **debe fallar** ahora mismo
@@ -111,7 +112,9 @@ public/flowchart.svg         ← el diagrama de arriba, completo
 - [ ] Conectar Supabase → **SUPABASE.md**
 - [ ] Rellenar la base de reglas → **RULES-GUIDE.md** y `/admin/fill-rules`
 - [ ] Pasar el descargo de responsabilidad por un abogado
-- [ ] Cambiar `VITE_ADMIN_PASSWORD`
+- [ ] Cambiar `VITE_ADMIN_PASSWORD` y crear tu usuario de Supabase
+- [ ] Configurar el aviso de lead nuevo (SUPABASE.md, sección 7)
+- [ ] `npm run predeploy:check` y resolver los bloqueantes
 - [ ] Desplegar
 
 El orden completo y lo que falta: **NEXT-STEPS.md**.
@@ -134,8 +137,9 @@ de la web y en el pie de **todas** las páginas del PDF. No lo quites.
    (Project Settings → API).
 
 Con Row Level Security activado, la clave anónima solo puede **insertar** leads e
-informes. Para que `/admin` lea de Supabase hace falta un usuario autenticado:
-ver NEXT-STEPS.md. Mientras tanto, `/admin` funciona en modo MOCK.
+informes. Para leerlos hace falta una sesión: en cuanto detecta Supabase, el
+panel pide correo y contraseña en vez de la contraseña local. Crea tu usuario en
+Authentication → Users (SUPABASE.md, sección 6).
 
 Si pones `VITE_MOCK=false` sin claves, la aplicación avisa por consola y sigue
 funcionando con `localStorage`. Nunca se rompe por falta de credenciales.

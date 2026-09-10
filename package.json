@@ -17,7 +17,8 @@
     "report:weekly": "tsx src/scripts/generate-weekly-report.ts",
     "backup:rules": "tsx src/scripts/backup-rules-to-json.ts",
     "health:check": "tsx src/scripts/health-check.ts",
-    "test:fast": "vitest run"
+    "test:fast": "vitest run",
+    "predeploy:check": "tsx src/scripts/pre-deploy.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

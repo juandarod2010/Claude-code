@@ -37,17 +37,21 @@ hay que leer fuentes oficiales y hablar con personas.
 
 ## Bloque 1 — Para operar de verdad (una tarde)
 
-6. **Conectar Supabase** → SUPABASE.md. Sin esto, cada lead vive en el navegador
-   del visitante y **tú no lo ves nunca**.
+El código de este bloque **ya está hecho**. Lo que queda son tus claves y tus
+decisiones. Ejecuta `npm run predeploy:check` y te dice exactamente qué falta.
 
-7. **Crear tu usuario de Supabase y añadir el inicio de sesión en `/admin`.**
-   Con RLS activado la lectura exige rol `authenticated`. Son unas 30 líneas con
-   Supabase Auth. Mientras tanto, los leads se consultan desde el Table Editor.
-   Nunca la clave `service_role` en el navegador.
+6. **Conectar Supabase** → SUPABASE.md. Sin esto, cada lead vive en el navegador
+   del visitante y **tú no lo ves nunca**. Tres migraciones y dos variables.
+
+7. ~~Añadir inicio de sesión en `/admin`~~ **Hecho.** El panel detecta si hay
+   Supabase: si lo hay, pide correo y contraseña reales contra Supabase Auth, y
+   esa sesión es la que hace que RLS te deje leer. Si no lo hay, sigue el
+   portero local. Solo te queda **crear tu usuario** en Authentication → Users
+   (SUPABASE.md, sección 6). Nunca la `service_role` en el navegador.
 
 8. **Cambiar `VITE_ADMIN_PASSWORD`.** La de por defecto es `complyo-dev` y está
-   escrita en el README. Y recuerda que esa contraseña viaja dentro del
-   JavaScript: es un portero contra visitas casuales, no seguridad.
+   escrita en el README. Con Supabase conectado deja de ser la puerta, pero
+   sigue siendo la del modo local.
 
 9. **Decidir la marca real.** Ahora dice Complyo, `complyo.eu` y
    `hola@complyo.eu`, todo de relleno. Un solo fichero: `src/config/brand.ts`.
@@ -57,13 +61,19 @@ hay que leer fuentes oficiales y hablar con personas.
     iniciada al confirmar el pago. Son promesas tuyas.
 
 11. **Desplegar.** `vercel.json` y `netlify.toml` están listos, con la
-    redirección de rutas a `index.html`. `npm run deploy` usa la CLI de Vercel.
+    redirección de rutas a `index.html`. Antes: `npm run predeploy:check`, que
+    revisa marca, descargo, claves, contraseña y build. Hay CI en
+    `.github/workflows/ci.yml` con lint, build, tests y comprobación de salud.
 
-12. **Resolver el aviso de lead nuevo.** Hoy nadie te avisa y al cliente no se le
-    envía ningún correo: el texto está listo en `/templates/email-diagnosis-sent.txt`
-    y se copia desde `/admin/leads` con el botón «Correo», pero lo envías tú a
-    mano. Con Supabase conectado, un Database Webhook a un servicio gratuito de
-    automatización lo resuelve sin backend propio.
+12. **Configurar el aviso de lead nuevo.** El disparador está escrito
+    (`supabase/migrations/0003_avisos.sql`): ejecuta la migración y pega tu URL
+    en la tabla `ajustes`. Instrucciones en SUPABASE.md, sección 7. Mientras
+    tanto, el contador junto a «Leads» dice cuántos hay sin tocar.
+
+    El correo al cliente lo sigues enviando tú: el botón «Correo» de
+    `/admin/leads` copia el texto que toca según el tipo de lead (entrega del
+    diagnóstico, o primera lectura del caso de Amazon con los próximos pasos del
+    analizador ya metidos). Las versiones editables están en `/templates/`.
 
 ---
 
@@ -71,7 +81,8 @@ hay que leer fuentes oficiales y hablar con personas.
 
 Ninguna está en el código.
 
-- Envío automático del PDF por correo al cliente.
+- Envío automático del PDF por correo al cliente (hoy el texto se copia y lo
+  envías tú).
 - Cobro del informe y del análisis de apelación (enlace de pago externo pegado
   en el botón, sin integración).
 - Panel de tasa de respuesta A/B con serie temporal. Los datos ya se guardan

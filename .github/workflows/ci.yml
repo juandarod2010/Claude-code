@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Tests y cobertura
+        run: npm test
+
+      # OJO: `rules:check` NO se ejecuta aquí como comprobación bloqueante.
+      # Con los datos de ejemplo DEBE fallar, y así seguirá hasta que la base de
+      # reglas esté verificada entera. Ponerlo como paso obligatorio dejaría el
+      # CI en rojo permanente, y un CI que siempre está rojo deja de mirarse.
+      # Se ejecuta en modo informativo: aparece en el registro, no tumba la
+      # ejecución. Cuando termines de rellenar las reglas, quita el
+      # `continue-on-error` y pasa a ser un guardarraíl de verdad.
+      - name: Estado de la base de reglas (informativo)
+        run: npm run rules:check
+        continue-on-error: true
+
+      - name: Comprobación de salud
+        run: npm run health:check
