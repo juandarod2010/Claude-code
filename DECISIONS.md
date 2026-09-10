@@ -96,3 +96,19 @@ NEXT-STEPS.md, no en el código.
 | Sin capturas de pantalla en la guía de EUR-Lex | Los portales cambian de aspecto y una captura vieja despista más de lo que ayuda. La guía enlaza a los sitios reales |
 | El logo del PDF es un hueco reservado con las iniciales | No me invento un logo. En cuanto pegues una imagen en `BRAND_LOGO.dataUri`, la usa |
 | La exportación de datos de `/admin` alimenta `npm run report:weekly` | En modo MOCK los datos están en el navegador y Node no puede leerlos. Con Supabase conectado, el script los lee directamente y el botón sobra |
+
+---
+
+# Fase 3 — decisiones
+
+| Decisión | Por qué |
+| --- | --- |
+| El panel A/B **cuenta, no infiere** | Con decenas de mensajes, un cálculo de significación daría una falsa sensación de certeza. Por debajo de 30 envíos por variante dice «muestra corta» y no señala ganadora; por encima, habla de «diferencia observada» y lo repite. Hay un test que impide que la palabra «significativo» acabe en pantalla |
+| El umbral de 30 envíos es un criterio práctico nuestro, no un resultado estadístico | Está en `MIN_SAMPLE_PER_VARIANT`, con nombre y en un sitio, para poder cambiarlo |
+| La puntuación del Plan of Action se enseña con su aclaración pegada | Un número grande en pantalla se lee como una probabilidad aunque el texto diga lo contrario. La aclaración va debajo de la barra, no en una nota al pie |
+| Los borradores del Plan of Action van a `localStorage`, no a Supabase | Es un documento de trabajo que cambia cada dos minutos mientras lo redactas; no es un dato del negocio. Lo que importa es el documento final, que se descarga |
+| El editor del Plan of Action prellena desde el lead pero **no redacta la causa raíz** | Las pistas del analizador se enseñan aparte, plegadas y etiquetadas como puntos de partida. Si el editor propusiera una causa raíz, acabarías enviándola |
+| `rules:check` avisa cuando no ha podido leer Supabase, en vez de callarse | Un guardarraíl que da luz verde sobre una base que no ha mirado es peor que no tenerlo |
+| El recorrido de extremo a extremo corre contra el **build**, no contra el servidor de desarrollo | Es lo que se despliega. Las diferencias entre uno y otro son justo las que se escapan |
+| Playwright entra como dependencia de desarrollo, con `PLAYWRIGHT_CHROMIUM_PATH` opcional | Cubre lo que la cobertura de Vitest no puede cubrir. Los fallos que detectó en las fases anteriores (el guion largo del PDF, el 404 del favicon, la sesión que no se cerraba) no los habría visto ninguna prueba de renderizado |
+| El CI separa lógica y recorrido en dos trabajos | El segundo tarda y necesita navegador; que un fallo de lint se vea en veinte segundos y no en tres minutos |

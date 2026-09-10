@@ -10,3 +10,5 @@ coverage
 backups/
 reports/*.json
 coverage
+test-results
+playwright-report

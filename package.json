@@ -18,7 +18,8 @@
     "backup:rules": "tsx src/scripts/backup-rules-to-json.ts",
     "health:check": "tsx src/scripts/health-check.ts",
     "test:fast": "vitest run",
-    "predeploy:check": "tsx src/scripts/pre-deploy.ts"
+    "predeploy:check": "tsx src/scripts/pre-deploy.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.2",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",

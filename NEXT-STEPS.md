@@ -85,11 +85,11 @@ Ninguna está en el código.
   envías tú).
 - Cobro del informe y del análisis de apelación (enlace de pago externo pegado
   en el botón, sin integración).
-- Panel de tasa de respuesta A/B con serie temporal. Los datos ya se guardan
-  (`prospectos.responded`, `leads.variant`) y el informe semanal ya los cuenta:
-  falta solo la pantalla.
-- Editor del Plan of Action dentro del panel: hoy `poa-template.ts` genera el
-  documento, pero el caso se rellena desde código o desde un JSON.
+- ~~Panel de tasa de respuesta A/B~~ **Hecho** (`/admin/ab`). Lo que queda sería
+  la serie temporal: hoy compara el acumulado, no la evolución semana a semana.
+- ~~Editor del Plan of Action~~ **Hecho** (`/admin/poa`). Prellena desde el lead,
+  puntúa lo completo que está el plan, dice qué falta y saca el documento en
+  Markdown, texto plano y JSON.
 - Historial de versiones de la base de reglas, para decirle a un cliente qué
   cambió desde su último informe. Es el argumento natural de la suscripción de
   vigilancia.
@@ -103,19 +103,22 @@ Ninguna está en el código.
 
 - **`/admin/leads` carga todo de golpe** (leads, informes y prospectos). Con
   cientos va bien; con decenas de miles habría que paginar.
-- **`npm run rules:check` solo mira las reglas del código.** Las que guardes
-  desde el panel se validan al guardarlas y se revisan en `/admin/rules-status`,
-  pero no entran en ese script. Cuando la base viva entera en Supabase, conviene
-  que el script lea también de ahí.
+- ~~`rules:check` solo mira las reglas del código~~ **Resuelto**: ahora lee
+  también la tabla `reglas` cuando Supabase está configurado, con la misma
+  precedencia que la aplicación, y dice de dónde ha leído. Si RLS no le deja
+  leer, avisa en vez de dar por buena una base que no ha mirado.
 - **En modo MOCK los informes dependen del `localStorage` del visitante**: si lo
   borra, el enlace `/informe/:id` deja de resolver. Se arregla al conectar
   Supabase.
+- **Los borradores del Plan of Action viven en tu navegador**, no en la base de
+  datos: es un documento de trabajo que cambia cada dos minutos mientras lo
+  redactas. Los planes terminados, descárgalos.
 - **El analizador de suspensiones es un clasificador por palabras clave.**
   Acierta en los casos típicos y falla en los redactados de forma inusual. Por
   eso nunca dice más del 90 % de confianza y siempre lleva descargo.
-- **La cobertura de tests mide la lógica, no las pantallas.** Las pantallas se
-  verifican con el recorrido completo en Chromium, que no está automatizado en
-  el repositorio: lo ejecuté a mano en cada fase.
+- **La cobertura de tests mide la lógica, no las pantallas.** Las pantallas las
+  cubre `npm run test:e2e`, que ya está en el repositorio y en el CI: nueve
+  recorridos en Chromium contra el build.
 - **El motor no distingue** entre «no hay obligación en ese país» y «ese país no
   está cargado todavía»: lo segundo sale como aviso al operador, no al cliente.
   Revísalo cuando la base esté completa.

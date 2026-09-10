@@ -40,3 +40,30 @@ jobs:
 
       - name: Comprobación de salud
         run: npm run health:check
+
+  recorrido:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Levanta el build y lo recorre en un navegador de verdad.
+      # Es lo que cubre las pantallas: Vitest cubre la lógica.
+      - name: Recorrido de extremo a extremo
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -46,7 +46,8 @@ Contraseña del panel interno en desarrollo: `complyo-dev` (o la que pongas en
 | `npm run build` | Compila TypeScript y genera `dist/` |
 | `npm run preview` | Sirve `dist/` para comprobar el build |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest con cobertura (101 tests, mínimo 80 % sobre la lógica) |
+| `npm test` | Vitest con cobertura (124 tests, mínimo 80 % sobre la lógica) |
+| `npm run test:e2e` | Recorrido completo en Chromium contra el build |
 | `npm run rules:check` | Guardarraíl de la base de reglas |
 | `npm run health:check` | Revisa entorno, tablas, reglas, PDF y rutas |
 | `npm run report:weekly` | Genera `reports/weekly-YYYY-WW.json` |
@@ -71,6 +72,8 @@ la fecha en que la leíste.
 | `/informe/:id` | por enlace | Informe en pantalla + descarga PDF |
 | `/admin/leads` | contraseña | Leads de los dos tracks: filtros, estado, ingresos, notas |
 | `/admin/rules-status` | contraseña | Cuántas de las 18 obligaciones están completas |
+| `/admin/poa` | contraseña | Editor del Plan of Action (Track A) |
+| `/admin/ab` | contraseña | Comparación de las variantes A y B |
 | `/admin/fill-rules` | contraseña | Alta de obligaciones + guía de EUR-Lex |
 | `/prospeccion` | contraseña | Generador de mensajes A/B |
 
@@ -88,7 +91,9 @@ src/
     prospecting/templates.ts ← mensajes de prospección A y B
     storage/                 ← localStorage y Supabase tras la misma interfaz
     rulesSource.ts           ← combina reglas del código y de la base de datos
-    emailTemplates.ts        ← correo de entrega del diagnóstico
+    emailTemplates.ts        ← correos de entrega y de primera respuesta
+    abStats.ts               ← comparación A/B (cuenta, no infiere)
+    poaDraft.ts              ← borradores del Plan of Action
     reportReference.ts       ← número INFORME-YYYYMMDD-XXXX
   modules/
     appeals/                 ← TRACK A
@@ -100,6 +105,7 @@ src/
       eur-lex-guide.tsx      ←   guía interactiva con checklist
   pages/                     ← una pantalla por ruta
   scripts/                   ← rules-check, informe semanal, health check, backup
+e2e/                         ← recorrido completo en navegador
 supabase/migrations/         ← esquema SQL con Row Level Security
 templates/                   ← plantillas de correo editables a mano
 public/flowchart.svg         ← el diagrama de arriba, completo

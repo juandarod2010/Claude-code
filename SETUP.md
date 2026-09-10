@@ -56,9 +56,12 @@ http://localhost:5173
 **Panel interno** (contraseña: `complyo-dev`)
 
 6. `/admin/leads` — los dos leads, con filtros, estado, ingresos y notas.
-7. `/admin/fill-rules` — rellena una obligación con la guía de EUR-Lex al lado.
-8. `/admin/rules-status` — mira cómo sube el contador de 18.
-9. `/prospeccion` — genera los mensajes A y B.
+7. `/admin/poa` — redacta el Plan of Action del caso de apelación: te puntúa lo
+   completo que está y te dice qué falta.
+8. `/prospeccion` — genera los mensajes A y B, y marca quién respondió.
+9. `/admin/ab` — compara las dos variantes.
+10. `/admin/fill-rules` — rellena una obligación con la guía de EUR-Lex al lado.
+11. `/admin/rules-status` — mira cómo sube el contador de 18.
 
 ## 7. Comprobaciones
 
@@ -68,7 +71,10 @@ npm run lint           # debe salir limpio
 npm test               # 101 tests + cobertura mínima del 80 %
 npm run health:check   # revisa entorno, tablas, reglas, PDF y rutas
 npm run rules:check    # DEBE FALLAR: es el guardarraíl de los datos de ejemplo
+npm run test:e2e       # recorrido completo en un navegador de verdad
 ```
+
+Para el recorrido, la primera vez: `npx playwright install chromium`.
 
 Que `rules:check` falle es lo esperado hasta que la base de reglas esté
 verificada. Si algún día pasa a verde, es que has terminado de rellenarla.

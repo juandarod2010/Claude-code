@@ -7,9 +7,11 @@ import { storage } from '../lib/storage';
 
 const LINKS = [
   { to: '/admin/leads', label: 'Leads' },
+  { to: '/admin/poa', label: 'Plan of Action' },
+  { to: '/prospeccion', label: 'Prospección' },
+  { to: '/admin/ab', label: 'A/B' },
   { to: '/admin/rules-status', label: 'Estado de reglas' },
   { to: '/admin/fill-rules', label: 'Rellenar reglas' },
-  { to: '/prospeccion', label: 'Prospección' },
 ];
 
 /** Marco común de las pantallas internas: portero + navegación. */
