@@ -29,6 +29,19 @@ const PAGE = { width: 210, height: 297, margin: 18 };
 const CONTENT_WIDTH = PAGE.width - PAGE.margin * 2;
 const FOOTER_SPACE = 22;
 
+/**
+ * Las fuentes estándar de jsPDF usan WinAnsi y se comen algunos caracteres
+ * tipográficos. Se sustituyen por equivalentes ASCII antes de dibujar.
+ */
+function sanitize(value: string): string {
+  return value
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/\u2026/g, '...')
+    .replace(/\u00a0/g, ' ');
+}
+
 interface Cursor {
   doc: jsPDF;
   y: number;
@@ -54,7 +67,7 @@ function text(
   c.doc.setFont('helvetica', style);
   c.doc.setFontSize(size);
   c.doc.setTextColor(...color);
-  const lines = c.doc.splitTextToSize(content, CONTENT_WIDTH - indent) as string[];
+  const lines = c.doc.splitTextToSize(sanitize(content), CONTENT_WIDTH - indent) as string[];
   const lineHeight = size * 0.45;
   for (const line of lines) {
     ensure(c, lineHeight);
@@ -91,13 +104,13 @@ function drawFooters(doc: jsPDF): void {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(90, 100, 115);
-    const lines = doc.splitTextToSize(DISCLAIMER, CONTENT_WIDTH) as string[];
+    const lines = doc.splitTextToSize(sanitize(DISCLAIMER), CONTENT_WIDTH) as string[];
     let y = PAGE.height - 16;
     for (const line of lines) {
       doc.text(line, PAGE.margin, y);
       y += 3;
     }
-    doc.text(`${BRAND.name} · página ${i} de ${total}`, PAGE.width - PAGE.margin, PAGE.height - 6, {
+    doc.text(sanitize(`${BRAND.name} · página ${i} de ${total}`), PAGE.width - PAGE.margin, PAGE.height - 6, {
       align: 'right',
     });
   }
