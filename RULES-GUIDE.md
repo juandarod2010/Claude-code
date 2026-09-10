@@ -103,7 +103,31 @@ no debe rellenarla.
 | Polonia | aparatos eléctricos | | | | ☐ |
 | Polonia | pilas | | | | ☐ |
 
-## Flujo de trabajo recomendado
+## Dos formas de rellenarla
+
+### A. Desde el panel, sin tocar código (recomendada)
+
+`/admin/fill-rules` tiene el formulario con los mismos campos, un botón
+**Validar** que te dice qué falta antes de guardar, y la guía de EUR-Lex
+desplegable al lado.
+
+Lo que guardes ahí va a la base de datos y **manda sobre la obligación del
+código que tenga el mismo identificador**. Así vas sustituyendo los 18 ejemplos
+uno a uno sin desplegar nada.
+
+El validador bloquea lo que es estructuralmente incorrecto (sin fuente, sin
+fecha, con la marca `__EJEMPLO__`, con una fuente que no es oficial) y **avisa
+sin bloquear** de lo que es una heurística nuestra, como que el dominio no
+parezca de una administración. Si tu fuente legítima está en un dominio que no
+reconoce, verás un aviso y podrás guardar igualmente.
+
+El avance se ve en `/admin/rules-status`: cuántas de las 18 combinaciones están
+completas, y qué le falta a cada una.
+
+En modo MOCK esas obligaciones viven en tu navegador. Para que sobrevivan,
+conecta Supabase (**SUPABASE.md**) y haz copia con `npm run backup:rules`.
+
+### B. Editando el código
 
 Ve país por país y flujo por flujo, no todo a la vez:
 
@@ -113,6 +137,9 @@ Ve país por país y flujo por flujo, no todo a la vez:
 npm run rules:check
 # 3. Repite hasta que salga "rules:check OK"
 ```
+
+Ojo: `rules:check` solo mira las reglas del **código**. Las que guardes desde el
+panel se validan al guardarlas y se revisan en `/admin/rules-status`.
 
 El script te lista exactamente qué falta en cada registro. Mientras falle, el
 informe sigue marcando esas obligaciones como pendientes: puedes seguir usando

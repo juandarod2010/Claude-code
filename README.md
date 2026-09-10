@@ -1,14 +1,23 @@
 # Complyo — MVP
 
-Máquina de generar informes de exposición al cumplimiento RAP (responsabilidad
-ampliada del productor) en la Unión Europea, más una herramienta de prospección
-asistida.
+Dos líneas de negocio sobre la misma base de código:
 
-No es un producto completo. Hace tres cosas:
+- **Track A — apelaciones.** Reactivar cuentas de Amazon suspendidas. Cobra
+  antes y no depende de ningún dato regulatorio.
+- **Track B — cumplimiento.** Informes de exposición al cumplimiento RAP
+  (responsabilidad ampliada del productor) en la Unión Europea.
 
-1. Un desconocido responde 8 preguntas en `/diagnostico`.
-2. La aplicación genera un informe en pantalla y en PDF en `/informe/:id`.
-3. Tú ves el lead en `/admin` y redactas el mensaje de contacto en `/prospeccion`.
+No es un producto completo, y a propósito.
+
+```
+TRACK A   Buscar caso ─▶ Enviar mensaje (A/B) ─▶ Respuesta ─▶ Redactar POA ─▶ Cobrar 1.500 $ ─▶ Reactivada
+          plantillas + analizador de correos + captación en /appeals
+
+TRACK B   Diagnóstico gratis ─▶ Informe 97 $ ─▶ Resolución 349–499 $ ─▶ Vigilancia 39 $/mes ─▶ ¿Datos del SKU?
+          8 preguntas       PDF en 24 h     con socio en la UE      fuentes revisadas    (sin construir)
+```
+
+Diagrama completo, con los bloqueantes de cada track: [`public/flowchart.svg`](public/flowchart.svg).
 
 > **La base de reglas que viene en el repositorio es FICTICIA.** Todos los
 > registros están marcados con `__EJEMPLO__` y con `verified: false`. Antes de
@@ -37,8 +46,12 @@ Contraseña del panel interno en desarrollo: `complyo-dev` (o la que pongas en
 | `npm run build` | Compila TypeScript y genera `dist/` |
 | `npm run preview` | Sirve `dist/` para comprobar el build |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest (motor de reglas y plantillas) |
+| `npm test` | Vitest con cobertura (101 tests, mínimo 80 % sobre la lógica) |
 | `npm run rules:check` | Guardarraíl de la base de reglas |
+| `npm run health:check` | Revisa entorno, tablas, reglas, PDF y rutas |
+| `npm run report:weekly` | Genera `reports/weekly-YYYY-WW.json` |
+| `npm run backup:rules` | Vuelca la base de reglas a `backups/` |
+| `npm run deploy` | `vercel deploy --prod` (requiere la CLI de Vercel) |
 
 ### `npm run rules:check` **debe fallar** ahora mismo
 
@@ -51,26 +64,57 @@ la fecha en que la leíste.
 
 | Ruta | Acceso | Qué es |
 | --- | --- | --- |
-| `/` | pública | Landing de una pantalla |
+| `/` | pública | Landing de una pantalla (Track B) |
+| `/appeals` | pública | Landing de apelaciones con analizador (Track A) |
 | `/diagnostico` | pública | 8 preguntas, una por pantalla |
 | `/informe/:id` | por enlace | Informe en pantalla + descarga PDF |
-| `/admin` | contraseña | Lista de leads con filtros |
+| `/admin/leads` | contraseña | Leads de los dos tracks: filtros, estado, ingresos, notas |
+| `/admin/rules-status` | contraseña | Cuántas de las 18 obligaciones están completas |
+| `/admin/fill-rules` | contraseña | Alta de obligaciones + guía de EUR-Lex |
 | `/prospeccion` | contraseña | Generador de mensajes A/B |
 
-## Estructura
+`/admin` redirige a `/admin/leads`.
+
+## Dónde está cada cosa
 
 ```
 src/
-  config/brand.ts       ← marca, textos, precios, descargo de responsabilidad
-  data/rules/           ← esquema + base de reglas (AHORA MISMO, DATOS FICTICIOS)
-  lib/engine/           ← motor de reglas (función pura, testeable)
-  lib/pdf/              ← generación del PDF con jsPDF
-  lib/prospecting/      ← plantillas A y B
-  lib/storage/          ← localStorage y Supabase tras la misma interfaz
-  pages/                ← una pantalla por ruta
-supabase/migrations/    ← esquema SQL con Row Level Security
-scripts/rules-check.ts  ← guardarraíl
+  config/brand.ts            ← marca, textos, precios, colores, descargo
+  data/rules/                ← esquema + base de reglas (HOY, DATOS FICTICIOS)
+  lib/
+    engine/                  ← motor de reglas (función pura, testeable)
+    pdf/reportPdf.ts         ← PDF A4 con jsPDF (texto, no captura)
+    prospecting/templates.ts ← mensajes de prospección A y B
+    storage/                 ← localStorage y Supabase tras la misma interfaz
+    rulesSource.ts           ← combina reglas del código y de la base de datos
+    emailTemplates.ts        ← correo de entrega del diagnóstico
+    reportReference.ts       ← número INFORME-YYYYMMDD-XXXX
+  modules/
+    appeals/                 ← TRACK A
+      messages.ts            ←   variantes A (urgencia) y B (solución)
+      analyzer.ts            ←   clasificador del correo de Amazon
+      poa-template.ts        ←   Plan of Action: estructura y salida
+    complyo/                 ← TRACK B
+      rules-validator.ts     ←   validación antes de guardar una obligación
+      eur-lex-guide.tsx      ←   guía interactiva con checklist
+  pages/                     ← una pantalla por ruta
+  scripts/                   ← rules-check, informe semanal, health check, backup
+supabase/migrations/         ← esquema SQL con Row Level Security
+templates/                   ← plantillas de correo editables a mano
+public/flowchart.svg         ← el diagrama de arriba, completo
 ```
+
+## Checklist de puesta en marcha
+
+- [ ] `npm install && cp .env.example .env && npm run dev` → **SETUP.md**
+- [ ] Recorrer los dos tracks en local
+- [ ] Conectar Supabase → **SUPABASE.md**
+- [ ] Rellenar la base de reglas → **RULES-GUIDE.md** y `/admin/fill-rules`
+- [ ] Pasar el descargo de responsabilidad por un abogado
+- [ ] Cambiar `VITE_ADMIN_PASSWORD`
+- [ ] Desplegar
+
+El orden completo y lo que falta: **NEXT-STEPS.md**.
 
 ## Cambiar la marca
 

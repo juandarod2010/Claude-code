@@ -54,3 +54,45 @@ está aislado a propósito para que puedas cambiarlo sin tocar el resto.
 Autenticación de usuarios, pagos, multiidioma, panel de analítica, envío de
 correos y cualquier tipo de scraping. Lo que se me ocurrió por el camino está en
 NEXT-STEPS.md, no en el código.
+
+---
+
+# Fase 2 — decisiones
+
+## Datos y afirmaciones
+
+| Decisión | Por qué |
+| --- | --- |
+| **No publico la tasa de éxito del 90 % en `/appeals`** | Es una cifra que no puedes demostrar todavía, y se la estarías enseñando a alguien que pierde dinero cada día. `APPEALS.successRate` está en `null` y la página dice, en su lugar, que nadie puede garantizar una reactivación. Pon el número real (con tamaño de muestra) cuando tengas casos cerrados y aparecerá solo |
+| `estimatedSuccess` del Plan of Action mide lo **completo** que está el plan, no la probabilidad de éxito | Amazon no publica tasas de aceptación. La puntuación es una lista de comprobación ponderada, nunca llega a 0 ni a 100, y lo dice en el propio documento |
+| La gravedad del analizador es dificultad de documentación, no pronóstico | Mismo motivo. Y la confianza del clasificador tiene un techo del 90 %: es búsqueda por palabras clave, no un modelo |
+| Las plantillas de apelación no citan políticas concretas de Amazon ni plazos | Son datos verificables que no he comprobado. Hay un test que impide que aparezcan porcentajes o promesas de garantía |
+| El informe semanal sale a cero cuando no hay datos, y lo dice en `source` y en `notes` | Un panel que se inventa métricas es peor que no tener panel |
+
+## Validador de reglas
+
+| Decisión | Por qué |
+| --- | --- |
+| La URL de la fuente **no** tiene que ser obligatoriamente de EUR-Lex | Lo pedía el esbozo, pero el registro nacional de cada país es la fuente correcta para casi todos los campos. Se bloquean los dominios que no son oficiales (blogs, redes, wikis, IA) y se **avisa** si no reconoce el dominio |
+| La lista de dominios oficiales es una heurística revisable, no una verdad jurídica | Está en `OFFICIAL_DOMAIN_HINTS` con un comentario que te pide revisarla. Equivocarse ahí solo produce un aviso: nunca te impide registrar una obligación legítima |
+| `errors` bloquea y `warnings` deja pasar | Lo estructural y la trazabilidad bloquean; lo heurístico avisa. Si no, el guardarraíl acaba estorbando y se termina desactivando |
+| No se puede marcar `verified: true` mientras haya errores | La casilla de verificado es tu firma; firmar un registro roto no debería ser posible |
+
+## Arquitectura
+
+| Decisión | Por qué |
+| --- | --- |
+| Las reglas de la **base de datos mandan** sobre las del código, por identificador | Permite sustituir los 18 ejemplos uno a uno desde `/admin/fill-rules` sin desplegar |
+| Tabla `reglas` con el contenido en una columna `jsonb` | El esquema de una obligación va a cambiar según aprendas de cada país; así no hay una migración por cada campo nuevo |
+| El identificador y el número del informe se generan en el **cliente** | El visitante anónimo puede insertar pero no actualizar (RLS). Si la referencia se calculase después, haría falta un UPDATE que la política deniega, y con razón |
+| La política de inserción anónima obliga a `status = 'nuevo'`, sin ingresos ni notas | Un visitante no puede escribir su propio historial comercial |
+| Migración 0002 idempotente (`add column if not exists`, `drop policy if exists`) | Se puede volver a ejecutar sin miedo cuando dudes de si la aplicaste |
+| Los scripts leen `.env` con un parser propio de 20 líneas | No pasan por Vite, así que `import.meta.env` no existe. Añadir `dotenv` por esto no compensa |
+| `npm test` ejecuta la cobertura y su umbral; `npm run test:fast` la salta | El umbral solo sirve si está en el comando que se ejecuta por costumbre |
+| La cobertura mide la **lógica** (`src/lib`, `src/modules`, `src/data`, `src/scripts/lib`), no las pantallas `.tsx` | Las pantallas se verifican con el recorrido real en Chromium, que prueba más que una cobertura de renderizado. Está declarado en `vite.config.ts` y aquí, para que el 96 % no se lea como algo que no es |
+| `eslint .` en vez de `eslint src` | Así también se revisan los tests y los scripts |
+| `vitest run` en vez de `vitest` | El comando por defecto no debe quedarse en modo vigilancia: en CI no terminaría nunca |
+| `deploy` usa la CLI de Vercel sin instalarla como dependencia | No añado 40 MB de dependencia a un proyecto estático; `npx vercel` o la CLI global hacen lo mismo |
+| Sin capturas de pantalla en la guía de EUR-Lex | Los portales cambian de aspecto y una captura vieja despista más de lo que ayuda. La guía enlaza a los sitios reales |
+| El logo del PDF es un hueco reservado con las iniciales | No me invento un logo. En cuanto pegues una imagen en `BRAND_LOGO.dataUri`, la usa |
+| La exportación de datos de `/admin` alimenta `npm run report:weekly` | En modo MOCK los datos están en el navegador y Node no puede leerlos. Con Supabase conectado, el script los lee directamente y el botón sobra |
