@@ -9,8 +9,10 @@ import {
   type Lead,
   type LeadStatus,
   type LeadType,
+  type Prospect,
   type Report,
 } from '../lib/storage';
+import { buildDiagnosisEmail } from '../lib/emailTemplates';
 import { COUNTRIES, COUNTRY_LABELS, type CountryCode } from '../types/domain';
 
 /** Panel de leads: filtros, búsqueda, estado, ingresos y notas. */
@@ -20,6 +22,7 @@ export default function AdminLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openLead, setOpenLead] = useState<string | null>(null);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
 
   const [country, setCountry] = useState<CountryCode | ''>('');
   const [type, setType] = useState<LeadType | ''>('');
@@ -31,8 +34,13 @@ export default function AdminLeadsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [list, allReports] = await Promise.all([storage.listLeads(), storage.listReports()]);
+        const [list, allReports, allProspects] = await Promise.all([
+          storage.listLeads(),
+          storage.listReports(),
+          storage.listProspects(),
+        ]);
         setLeads(list);
+        setProspects(allProspects);
         const byLead: Record<string, Report | undefined> = {};
         for (const report of allReports) {
           if (!byLead[report.leadId]) byLead[report.leadId] = report;
@@ -93,8 +101,37 @@ export default function AdminLeadsPage() {
     replaceLead(await storage.updateLead(id, { revenue: parsed }));
   }
 
+  /**
+   * Exporta todo a reports/export.json. Es lo que da de comer a
+   * `npm run report:weekly` mientras estemos en modo MOCK: los datos viven en
+   * el localStorage del navegador y Node no puede leerlos desde fuera.
+   */
+  function exportData() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      leads,
+      reports: Object.values(reports).filter(Boolean),
+      prospects,
+      rulesVerified: 0,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
-    <AdminLayout title="Leads">
+    <AdminLayout
+      title="Leads"
+      actions={
+        <button type="button" className="btn-secondary" onClick={exportData} title="Descarga export.json para npm run report:weekly">
+          Exportar datos
+        </button>
+      }
+    >
       {error && (
         <p className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-alert">
           {error}
@@ -245,9 +282,27 @@ export default function AdminLeadsPage() {
                     </td>
                     <td className="py-2 whitespace-nowrap">
                       {report && (
-                        <Link className="text-brand-600 underline" to={`/informe/${report.id}`}>
-                          Informe
-                        </Link>
+                        <>
+                          <Link className="text-brand-600 underline" to={`/informe/${report.id}`}>
+                            Informe
+                          </Link>
+                          <button
+                            type="button"
+                            className="ml-3 text-brand-600 underline"
+                            title="Copia el correo de entrega del diagnóstico, listo para pegar"
+                            onClick={() => {
+                              const mail = buildDiagnosisEmail({
+                                name: lead.companyName,
+                                reference: report.reference,
+                              });
+                              navigator.clipboard
+                                .writeText(`${mail.subject}\n\n${mail.body}`)
+                                .catch(() => setError('El navegador ha bloqueado el portapapeles.'));
+                            }}
+                          >
+                            Correo
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"

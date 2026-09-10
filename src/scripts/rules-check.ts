@@ -11,8 +11,8 @@
  * Con los datos de ejemplo ESTE SCRIPT DEBE FALLAR. Es la prueba de que el
  * guardarraíl funciona. Solo pasa a verde cuando la base está verificada entera.
  */
-import { RULES } from '../src/data/rules/index';
-import { EXAMPLE_MARKER, type ObligationRule } from '../src/data/rules/schema';
+import { RULES } from '../data/rules/index';
+import { EXAMPLE_MARKER, type ObligationRule } from '../data/rules/schema';
 
 interface Problem {
   id: string;

@@ -87,7 +87,7 @@ export default function InformePage() {
             Informe de exposición al cumplimiento RAP en la Unión Europea
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            {lead?.companyName ?? lead?.email ?? 'Sin identificar'} · Informe {report.id} ·{' '}
+            {lead?.companyName ?? lead?.email ?? 'Sin identificar'} · {report.reference} ·{' '}
             {new Date(report.createdAt).toLocaleDateString('es-ES')}
           </p>
           <p className="mt-1 text-sm text-slate-500">
@@ -217,7 +217,7 @@ export default function InformePage() {
             <a
               className="btn-primary w-full sm:w-auto"
               href={`mailto:${BRAND.contactEmail}?subject=${encodeURIComponent(
-                `Quiero resolverlo — informe ${report.id}`,
+                `Quiero resolverlo — ${report.reference}`,
               )}`}
             >
               {REPORT_CTA_LABEL}

@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" width="980" height="560" role="img"
+     aria-label="Flujo de los dos tracks: apelaciones Amazon y cumplimiento RAP en la Unión Europea">
+  <title>Complyo — flujo de los dos tracks</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      .t   { font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .h   { font-size: 20px; font-weight: 700; fill: #0d1b2a; }
+      .lane{ font-size: 14px; font-weight: 700; fill: #1d4ed8; letter-spacing: .04em; }
+      .box { font-size: 13px; font-weight: 600; fill: #0d1b2a; }
+      .sub { font-size: 11px; fill: #5a6473; }
+      .note{ font-size: 11px; fill: #92400e; }
+      .foot{ font-size: 10px; fill: #5a6473; }
+    </style>
+  </defs>
+
+  <rect width="980" height="560" fill="#ffffff"/>
+  <text class="t h" x="32" y="44">Complyo — cómo entra el dinero</text>
+  <text class="t sub" x="32" y="64">Dos tracks independientes. El A cobra antes; el B necesita la base de reglas verificada.</text>
+
+  <!-- TRACK A -->
+  <rect x="32" y="92" width="916" height="176" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="t lane" x="52" y="118">TRACK A · APELACIONES AMAZON</text>
+
+  <g>
+    <rect x="52" y="132" width="140" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="122" y="158" text-anchor="middle">Buscar caso</text>
+    <text class="t sub" x="122" y="176" text-anchor="middle">a mano, sin scraping</text>
+
+    <line x1="192" y1="162" x2="222" y2="162" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="228" y="132" width="140" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="298" y="158" text-anchor="middle">Enviar mensaje</text>
+    <text class="t sub" x="298" y="176" text-anchor="middle">variante A o B</text>
+
+    <line x1="368" y1="162" x2="398" y2="162" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="404" y="132" width="140" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="474" y="158" text-anchor="middle">Respuesta</text>
+    <text class="t sub" x="474" y="176" text-anchor="middle">/appeals o correo</text>
+
+    <line x1="544" y1="162" x2="574" y2="162" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="580" y="132" width="140" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="650" y="158" text-anchor="middle">Redactar POA</text>
+    <text class="t sub" x="650" y="176" text-anchor="middle">causa raíz + pruebas</text>
+
+    <line x1="720" y1="162" x2="750" y2="162" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="756" y="132" width="172" height="60" rx="8" fill="#eef4ff" stroke="#1d4ed8"/>
+    <text class="t box" x="842" y="158" text-anchor="middle">Cobrar 1.500 $</text>
+    <text class="t sub" x="842" y="176" text-anchor="middle">→ cuenta reactivada</text>
+  </g>
+
+  <text class="t sub" x="52" y="224">Listo hoy: plantillas A/B, analizador del correo de Amazon, plantilla de Plan of Action y captación en /appeals.</text>
+  <text class="t note" x="52" y="244">Bloqueante: no se publica tasa de éxito hasta que existan casos cerrados que la respalden.</text>
+
+  <!-- TRACK B -->
+  <rect x="32" y="288" width="916" height="190" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text class="t lane" x="52" y="314">TRACK B · CUMPLIMIENTO RAP EN LA UNIÓN EUROPEA</text>
+
+  <g>
+    <rect x="52" y="328" width="150" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="127" y="354" text-anchor="middle">Diagnóstico gratis</text>
+    <text class="t sub" x="127" y="372" text-anchor="middle">8 preguntas</text>
+
+    <line x1="202" y1="358" x2="232" y2="358" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="238" y="328" width="150" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="313" y="354" text-anchor="middle">Informe 97 $</text>
+    <text class="t sub" x="313" y="372" text-anchor="middle">PDF en 24 h</text>
+
+    <line x1="388" y1="358" x2="418" y2="358" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="424" y="328" width="160" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="t box" x="504" y="354" text-anchor="middle">Resolución 349–499 $</text>
+    <text class="t sub" x="504" y="372" text-anchor="middle">socio establecido en UE</text>
+
+    <line x1="584" y1="358" x2="614" y2="358" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="620" y="328" width="150" height="60" rx="8" fill="#eef4ff" stroke="#1d4ed8"/>
+    <text class="t box" x="695" y="354" text-anchor="middle">Vigilancia 39 $/mes</text>
+    <text class="t sub" x="695" y="372" text-anchor="middle">fuentes revisadas</text>
+
+    <line x1="770" y1="358" x2="800" y2="358" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="806" y="328" width="122" height="60" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-dasharray="5 4"/>
+    <text class="t box" x="867" y="354" text-anchor="middle">¿Datos del SKU?</text>
+    <text class="t sub" x="867" y="372" text-anchor="middle">sin construir</text>
+  </g>
+
+  <text class="t sub" x="52" y="420">Listo hoy: diagnóstico, motor de reglas, informe en pantalla y PDF, panel de leads y alta de obligaciones sin tocar código.</text>
+  <text class="t note" x="52" y="440">Bloqueante: las 18 obligaciones siguen siendo de ejemplo. Hasta verificarlas, el informe se marca como PENDIENTE DE VERIFICACIÓN.</text>
+  <text class="t sub" x="52" y="460">Rellenarlas se hace en /admin/fill-rules, con la guía de EUR-Lex al lado. El avance se ve en /admin/rules-status.</text>
+
+  <text class="t foot" x="32" y="520">Este informe es orientativo y no constituye asesoramiento jurídico. Complyo no actúa como representante autorizado ni como organismo</text>
+  <text class="t foot" x="32" y="534">de responsabilidad de productor. Las altas ante autoridades y organismos se tramitan a través de socios establecidos en la Unión Europea.</text>
+</svg>

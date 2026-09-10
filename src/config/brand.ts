@@ -92,3 +92,31 @@ export const APPEALS = {
    */
   successRate: null as { rate: number; sampleSize: number; since: string } | null,
 } as const;
+
+/**
+ * Colores corporativos. Se usan en el PDF y como referencia para la web.
+ * Formato RGB 0–255, que es lo que consume jsPDF directamente.
+ * Si los cambias aquí, cambian en el PDF sin tocar más código; en la web,
+ * los equivalentes están en tailwind.config.js.
+ */
+export const BRAND_COLORS = {
+  primary: [29, 78, 216] as [number, number, number],
+  ink: [20, 27, 42] as [number, number, number],
+  muted: [90, 100, 115] as [number, number, number],
+  warning: [146, 64, 14] as [number, number, number],
+  hairline: [210, 214, 220] as [number, number, number],
+};
+
+/**
+ * Logo del PDF.
+ *
+ * `dataUri` vacío = se dibuja un recuadro con las iniciales de la marca. En
+ * cuanto pegues aquí una imagen en base64 (`data:image/png;base64,…`), el PDF
+ * la usa en su lugar. Se deja así para no inventarme un logo que no existe.
+ * Tamaño recomendado: 240 × 80 px, fondo transparente.
+ */
+export const BRAND_LOGO = {
+  dataUri: '',
+  widthMm: 32,
+  heightMm: 11,
+};

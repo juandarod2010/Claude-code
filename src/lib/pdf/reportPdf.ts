@@ -2,6 +2,8 @@ import { jsPDF } from 'jspdf';
 import {
   AUTHORITY_LEAD_TIME_UNKNOWN,
   BRAND,
+  BRAND_COLORS,
+  BRAND_LOGO,
   DISCLAIMER,
   PRICING,
   REGULATION,
@@ -63,7 +65,7 @@ function text(
   content: string,
   opts: { size?: number; style?: 'normal' | 'bold' | 'italic'; color?: [number, number, number]; gap?: number; indent?: number } = {},
 ): void {
-  const { size = 10, style = 'normal', color = [20, 27, 42], gap = 2, indent = 0 } = opts;
+  const { size = 10, style = 'normal', color = BRAND_COLORS.ink, gap = 2, indent = 0 } = opts;
   c.doc.setFont('helvetica', style);
   c.doc.setFontSize(size);
   c.doc.setTextColor(...color);
@@ -80,46 +82,83 @@ function text(
 function heading(c: Cursor, n: number, title: string): void {
   ensure(c, 16);
   c.y += 4;
-  c.doc.setDrawColor(29, 78, 216);
+  c.doc.setDrawColor(...BRAND_COLORS.primary);
   c.doc.setLineWidth(0.6);
   c.doc.line(PAGE.margin, c.y - 3.5, PAGE.margin + CONTENT_WIDTH, c.y - 3.5);
-  text(c, `${n}. ${title}`, { size: 13, style: 'bold', color: [29, 78, 216], gap: 3 });
+  text(c, `${n}. ${title}`, { size: 13, style: 'bold', color: BRAND_COLORS.primary, gap: 3 });
 }
 
 function unverifiedBanner(c: Cursor, indent = 0): void {
-  text(c, UNVERIFIED_BADGE, { size: 8, style: 'bold', color: [146, 64, 14], gap: 1.5, indent });
+  text(c, UNVERIFIED_BADGE, { size: 8, style: 'bold', color: BRAND_COLORS.warning, gap: 1.5, indent });
 }
 
 function obligationTitle(o: AppliedObligation): string {
   return `${COUNTRY_LABELS[o.rule.country]} · ${WASTE_STREAM_LABELS[o.rule.stream]} — ${o.rule.authorityName}`;
 }
 
-function drawFooters(doc: jsPDF): void {
+function drawFooters(doc: jsPDF, reference: string): void {
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i += 1) {
     doc.setPage(i);
-    doc.setDrawColor(210, 214, 220);
+    doc.setDrawColor(...BRAND_COLORS.hairline);
     doc.setLineWidth(0.3);
     doc.line(PAGE.margin, PAGE.height - 20, PAGE.width - PAGE.margin, PAGE.height - 20);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(90, 100, 115);
+    doc.setTextColor(...BRAND_COLORS.muted);
     const lines = doc.splitTextToSize(sanitize(DISCLAIMER), CONTENT_WIDTH) as string[];
     let y = PAGE.height - 16;
     for (const line of lines) {
       doc.text(line, PAGE.margin, y);
       y += 3;
     }
-    doc.text(sanitize(`${BRAND.name} · página ${i} de ${total}`), PAGE.width - PAGE.margin, PAGE.height - 6, {
-      align: 'right',
-    });
+    doc.text(
+      sanitize(`${BRAND.name} · ${reference} · página ${i} de ${total}`),
+      PAGE.width - PAGE.margin,
+      PAGE.height - 6,
+      { align: 'right' },
+    );
   }
+}
+
+/**
+ * Dibuja el logo en la esquina superior. Si no hay imagen configurada, deja un
+ * recuadro con las iniciales: es un hueco reservado, visible pero discreto,
+ * para que se vea dónde va cuando pegues el tuyo en BRAND_LOGO.dataUri.
+ */
+function drawLogo(c: Cursor): void {
+  const { doc } = c;
+  const { widthMm, heightMm, dataUri } = BRAND_LOGO;
+
+  if (dataUri) {
+    try {
+      doc.addImage(dataUri, PAGE.margin, c.y - 1, widthMm, heightMm);
+      c.y += heightMm + 4;
+      return;
+    } catch {
+      // Imagen ilegible: se cae al recuadro de reserva en vez de romper el PDF.
+    }
+  }
+
+  doc.setDrawColor(...BRAND_COLORS.hairline);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(PAGE.margin, c.y - 1, widthMm, heightMm, 1.5, 1.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND_COLORS.primary);
+  doc.text(
+    sanitize(BRAND.name.slice(0, 12)),
+    PAGE.margin + widthMm / 2,
+    c.y + heightMm / 2 + 1,
+    { align: 'center', baseline: 'middle' },
+  );
+  c.y += heightMm + 4;
 }
 
 export function buildReportPdf(report: Report, email: string, companyName: string | null): jsPDF {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   doc.setProperties({
-    title: `${BRAND.name} — Informe de exposición`,
+    title: `${BRAND.name} — ${report.reference}`,
     subject: `Exposición al ${REGULATION.reference}`,
   });
 
@@ -127,7 +166,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
   const { result } = report;
 
   // ---------------------------------------------------------------- Portada
-  text(c, BRAND.name, { size: 11, style: 'bold', color: [29, 78, 216], gap: 1 });
+  drawLogo(c);
   text(c, 'Informe de exposición al cumplimiento RAP en la Unión Europea', {
     size: 18,
     style: 'bold',
@@ -135,13 +174,13 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
   });
   text(
     c,
-    `${companyName ?? email} · Informe ${report.id} · Generado el ${new Date(report.createdAt).toLocaleDateString('es-ES')}`,
-    { size: 9, color: [90, 100, 115], gap: 4 },
+    `${companyName || email} · ${report.reference} · Generado el ${new Date(report.createdAt).toLocaleDateString('es-ES')}`,
+    { size: 9, color: BRAND_COLORS.muted, gap: 4 },
   );
   text(
     c,
     `Norma de referencia: ${REGULATION.reference}. Fecha de aplicación: ${REGULATION.applicationDate}.`,
-    { size: 9, color: [90, 100, 115], gap: 3 },
+    { size: 9, color: BRAND_COLORS.muted, gap: 3 },
   );
 
   if (result.summary.allUnverified) {
@@ -149,7 +188,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
     text(
       c,
       'La base de reglas usada para este informe todavía no ha sido verificada contra fuentes oficiales. Este documento es un borrador interno.',
-      { size: 8, style: 'italic', color: [146, 64, 14], gap: 3 },
+      { size: 8, style: 'italic', color: BRAND_COLORS.warning, gap: 3 },
     );
   }
 
@@ -165,7 +204,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
       `${country.obligations.length} obligación(es) aplicable(s) · Riesgo más alto: ${RISK_LABELS[country.highestRisk]} · Flujos: ${country.streams
         .map((s) => WASTE_STREAM_LABELS[s])
         .join(', ')}`,
-      { size: 9, color: [70, 80, 95], gap: 1 },
+      { size: 9, color: BRAND_COLORS.muted, gap: 1 },
     );
     if (country.unverifiedCount > 0) unverifiedBanner(c);
     c.y += 1.5;
@@ -177,7 +216,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
     ensure(c, 30);
     text(c, obligationTitle(o), { size: 10, style: 'bold', gap: 1 });
     if (!o.verified) unverifiedBanner(c);
-    text(c, `Riesgo: ${RISK_LABELS[o.risk]}`, { size: 9, color: [70, 80, 95], gap: 1 });
+    text(c, `Riesgo: ${RISK_LABELS[o.risk]}`, { size: 9, color: BRAND_COLORS.muted, gap: 1 });
     if (o.rule.complianceSchemeName) {
       text(c, `Organismo: ${o.rule.complianceSchemeName}`, { size: 9, gap: 1, indent: 3 });
     }
@@ -190,7 +229,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
     text(c, `Datos que exige: ${o.rule.requiredData.join('; ')}`, { size: 9, gap: 1, indent: 3 });
     text(c, `Fuente: ${o.rule.sourceUrl} (consultada el ${o.rule.sourceCheckedAt})`, {
       size: 8,
-      color: [90, 100, 115],
+      color: BRAND_COLORS.muted,
       gap: 3,
       indent: 3,
     });
@@ -204,7 +243,7 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
     if (!o.verified) unverifiedBanner(c, 3);
     text(c, o.rule.nonComplianceConsequence, { size: 9, gap: 1, indent: 3 });
     for (const reason of o.riskReasons) {
-      text(c, `· ${reason}`, { size: 8, color: [70, 80, 95], gap: 0.5, indent: 3 });
+      text(c, `· ${reason}`, { size: 8, color: BRAND_COLORS.muted, gap: 0.5, indent: 3 });
     }
     c.y += 1.5;
   }
@@ -223,26 +262,26 @@ export function buildReportPdf(report: Report, email: string, companyName: strin
   });
   text(c, SERVICE_COMMITMENTS.reportDelivery, { size: 9, gap: 1 });
   text(c, SERVICE_COMMITMENTS.resolutionStart, { size: 9, gap: 2 });
-  text(c, AUTHORITY_LEAD_TIME_UNKNOWN, { size: 9, style: 'italic', color: [146, 64, 14], gap: 2 });
+  text(c, AUTHORITY_LEAD_TIME_UNKNOWN, { size: 9, style: 'italic', color: BRAND_COLORS.warning, gap: 2 });
   text(
     c,
     `Obligaciones detectadas: ${result.summary.totalObligations} en ${result.summary.countriesCovered} país(es). Críticas: ${result.summary.criticalCount}.`,
-    { size: 9, color: [70, 80, 95], gap: 2 },
+    { size: 9, color: BRAND_COLORS.muted, gap: 2 },
   );
 
   // ------------------------------------------------------------ 5. CTA
   heading(c, 5, 'Resolverlo');
   text(
     c,
-    `Responde a este correo o escribe a ${BRAND.contactEmail} indicando el número de informe ${report.id} y lo ponemos en marcha.`,
+    `Responde a este correo o escribe a ${BRAND.contactEmail} indicando el número de informe ${report.reference} y lo ponemos en marcha.`,
     { size: 10, gap: 2 },
   );
 
-  drawFooters(doc);
+  drawFooters(doc, report.reference);
   return doc;
 }
 
 export function downloadReportPdf(report: Report, email: string, companyName: string | null): void {
   const doc = buildReportPdf(report, email, companyName);
-  doc.save(`${BRAND.name.toLowerCase()}-informe-${report.id.slice(0, 8)}.pdf`);
+  doc.save(`${BRAND.name.toLowerCase()}-${report.reference.toLowerCase()}.pdf`);
 }
