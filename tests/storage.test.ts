@@ -137,3 +137,98 @@ describe('almacenamiento en localStorage', () => {
     expect(newId()).not.toBe(newId());
   });
 });
+
+describe('paginación de leads', () => {
+  async function seed(count: number): Promise<void> {
+    for (let i = 0; i < count; i += 1) {
+      const lead = await mockStorage.createLead({
+        answers: answers({ email: `lead-${String(i).padStart(3, '0')}@ejemplo.invalid` }),
+      });
+      // Fechas descendentes para que el orden sea comprobable.
+      const all = JSON.parse(localStorage.getItem('complyo.leads') ?? '[]');
+      const index = all.findIndex((l: { id: string }) => l.id === lead.id);
+      all[index].createdAt = `2026-09-${String(28 - i).padStart(2, '0')}T10:00:00.000Z`;
+      localStorage.setItem('complyo.leads', JSON.stringify(all));
+    }
+  }
+
+  it('11. devuelve solo la página pedida, con el total detrás', async () => {
+    await seed(7);
+    const first = await mockStorage.queryLeads({ limit: 3, offset: 0 });
+    expect(first.rows).toHaveLength(3);
+    expect(first.total).toBe(7);
+
+    const last = await mockStorage.queryLeads({ limit: 3, offset: 6 });
+    expect(last.rows).toHaveLength(1);
+    expect(last.total).toBe(7);
+  });
+
+  it('12. las páginas no se solapan y van de más reciente a más antigua', async () => {
+    await seed(6);
+    const a = await mockStorage.queryLeads({ limit: 3, offset: 0 });
+    const b = await mockStorage.queryLeads({ limit: 3, offset: 3 });
+    const ids = [...a.rows, ...b.rows].map((l) => l.id);
+    expect(new Set(ids).size).toBe(6);
+    const fechas = [...a.rows, ...b.rows].map((l) => l.createdAt);
+    expect([...fechas].sort((x, y) => y.localeCompare(x))).toEqual(fechas);
+  });
+
+  it('13. un desplazamiento más allá del final devuelve vacío, no un error', async () => {
+    await seed(3);
+    const page = await mockStorage.queryLeads({ limit: 25, offset: 100 });
+    expect(page.rows).toEqual([]);
+    expect(page.total).toBe(3);
+  });
+
+  it('14. el filtro se aplica ANTES de paginar', async () => {
+    await seed(4);
+    const all = JSON.parse(localStorage.getItem('complyo.leads') ?? '[]');
+    all[0].status = 'convertido';
+    localStorage.setItem('complyo.leads', JSON.stringify(all));
+
+    const page = await mockStorage.queryLeads({ status: 'convertido', limit: 25, offset: 0 });
+    expect(page.total).toBe(1);
+    expect(page.rows).toHaveLength(1);
+  });
+
+  it('15. las cifras son del filtro entero, no de la página', async () => {
+    await seed(5);
+    const all = JSON.parse(localStorage.getItem('complyo.leads') ?? '[]');
+    for (const l of all) {
+      l.status = 'convertido';
+      l.revenue = 100;
+    }
+    localStorage.setItem('complyo.leads', JSON.stringify(all));
+
+    const stats = await mockStorage.aggregateLeads({});
+    expect(stats).toEqual({ total: 5, converted: 5, revenue: 500 });
+
+    // Aunque la página muestre dos, las cifras siguen siendo de las cinco.
+    const page = await mockStorage.queryLeads({ limit: 2, offset: 0 });
+    expect(page.rows).toHaveLength(2);
+    expect(stats.total).toBe(5);
+  });
+
+  it('16. cuenta los leads sin tocar', async () => {
+    await seed(3);
+    const all = JSON.parse(localStorage.getItem('complyo.leads') ?? '[]');
+    all[0].status = 'contactado';
+    localStorage.setItem('complyo.leads', JSON.stringify(all));
+    expect(await mockStorage.countNewLeads()).toBe(2);
+  });
+
+  it('17. los informes se piden solo para los leads de la página', async () => {
+    const uno = await mockStorage.createLead({ answers: answers() });
+    const dos = await mockStorage.createLead({ answers: answers() });
+    const informe = await mockStorage.createReport({
+      leadId: uno.id,
+      result: evaluate(answers()),
+    });
+    await mockStorage.createReport({ leadId: dos.id, result: evaluate(answers()) });
+
+    const found = await mockStorage.getReportsForLeads([uno.id]);
+    expect(Object.keys(found)).toEqual([uno.id]);
+    expect(found[uno.id].id).toBe(informe.id);
+    expect(await mockStorage.getReportsForLeads([])).toEqual({});
+  });
+});

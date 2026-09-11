@@ -104,8 +104,14 @@ Ninguna está en el código.
 
 ## Deuda técnica conocida
 
-- **`/admin/leads` carga todo de golpe** (leads, informes y prospectos). Con
-  cientos va bien; con decenas de miles habría que paginar.
+- ~~`/admin/leads` carga todo de golpe~~ **Resuelto**: el panel pagina en el
+  origen. Pide solo las filas de la página, los informes solo de esos leads, y
+  las cifras de cabecera con consultas de recuento que no traen filas. La
+  exportación sigue pidiéndolo todo, pero solo al pulsar el botón: ese es su
+  cometido.
+- **La comparación A/B (`/admin/ab`) y el informe semanal sí recorren todos los
+  leads.** Son cálculos sobre el conjunto entero, así que hoy es correcto; con
+  decenas de miles convendría moverlos a una consulta agregada en la base.
 - ~~`rules:check` solo mira las reglas del código~~ **Resuelto**: ahora lee
   también la tabla `reglas` cuando Supabase está configurado, con la misma
   precedencia que la aplicación, y dice de dónde ha leído. Si RLS no le deja

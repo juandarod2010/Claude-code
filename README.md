@@ -46,7 +46,7 @@ Contraseña del panel interno en desarrollo: `complyo-dev` (o la que pongas en
 | `npm run build` | Compila TypeScript y genera `dist/` |
 | `npm run preview` | Sirve `dist/` para comprobar el build |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest con cobertura (146 tests, mínimo 80 % sobre la lógica) |
+| `npm test` | Vitest con cobertura (166 tests, mínimo 80 % sobre la lógica) |
 | `npm run test:e2e` | Recorrido completo en Chromium contra el build |
 | `npm run rules:check` | Guardarraíl de la base de reglas |
 | `npm run health:check` | Revisa entorno, tablas, reglas, PDF y rutas |
@@ -70,7 +70,7 @@ la fecha en que la leíste.
 | `/appeals` | pública | Landing de apelaciones con analizador (Track A) |
 | `/diagnostico` | pública | 8 preguntas, una por pantalla |
 | `/informe/:id` | por enlace | Informe en pantalla + descarga PDF |
-| `/admin/leads` | contraseña | Leads de los dos tracks: filtros, estado, ingresos, notas |
+| `/admin/leads` | contraseña | Leads de los dos tracks: filtros, paginación, estado, ingresos, notas |
 | `/admin/rules-status` | contraseña | Cuántas de las 18 obligaciones están completas |
 | `/admin/poa` | contraseña | Editor del Plan of Action (Track A) |
 | `/admin/ab` | contraseña | Comparación de las variantes A y B |
@@ -94,6 +94,7 @@ src/
     rulesSource.ts           ← combina reglas del código y de la base de datos
     emailTemplates.ts        ← correos de entrega y de primera respuesta
     abStats.ts               ← comparación A/B (cuenta, no infiere)
+    leadFilters.ts           ← filtros y paginación del panel (puro)
     rulesHistory.ts          ← qué cambió en cada obligación: la vigilancia
     poaDraft.ts              ← borradores del Plan of Action
     reportReference.ts       ← número INFORME-YYYYMMDD-XXXX

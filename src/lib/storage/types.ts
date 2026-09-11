@@ -1,4 +1,5 @@
 import type { ObligationRule } from '../../data/rules/schema';
+import type { LeadAggregates, LeadFilters, LeadPage, LeadQuery } from '../leadFilters';
 import type { RuleVersion } from '../rulesHistory';
 import type { DiagnosticAnswers } from '../../types/domain';
 import type { EngineResult } from '../engine/types';
@@ -102,6 +103,8 @@ export interface StoredRule extends ObligationRule {
   updatedAt: string;
 }
 
+export type { LeadAggregates, LeadFilters, LeadPage, LeadQuery } from '../leadFilters';
+
 export interface LeadPatch {
   status?: LeadStatus;
   revenue?: number | null;
@@ -118,7 +121,17 @@ export interface Storage {
     companyName?: string | null;
     appeal: AppealDetails;
   }): Promise<Lead>;
+  /**
+   * Todos los leads. Se mantiene para los cálculos que necesitan el conjunto
+   * entero (comparación A/B, informe semanal). El panel NO lo usa: pagina.
+   */
   listLeads(): Promise<Lead[]>;
+  /** Una página de leads filtrados, con el total que hay detrás del filtro. */
+  queryLeads(query: LeadQuery): Promise<LeadPage>;
+  /** Cifras del conjunto filtrado entero, no solo de la página visible. */
+  aggregateLeads(filters: LeadFilters): Promise<LeadAggregates>;
+  /** Cuántos leads siguen sin tocar. Para el aviso de la navegación. */
+  countNewLeads(): Promise<number>;
   getLead(id: string): Promise<Lead | null>;
   updateLead(id: string, patch: LeadPatch): Promise<Lead | null>;
   addLeadNote(id: string, text: string): Promise<Lead | null>;
@@ -126,6 +139,8 @@ export interface Storage {
   createReport(input: { leadId: string; result: EngineResult }): Promise<Report>;
   getReport(id: string): Promise<Report | null>;
   getReportByLead(leadId: string): Promise<Report | null>;
+  /** Informes de un puñado de leads concretos: los de la página que se ve. */
+  getReportsForLeads(leadIds: readonly string[]): Promise<Record<string, Report>>;
   listReports(): Promise<Report[]>;
 
   createProspect(input: Omit<Prospect, 'id' | 'createdAt' | 'responded'>): Promise<Prospect>;

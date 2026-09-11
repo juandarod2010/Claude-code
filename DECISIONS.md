@@ -128,3 +128,20 @@ NEXT-STEPS.md, no en el código.
 | El fallo al anotar el historial **no** impide guardar la obligación | El dato es lo primero; el registro es importante pero secundario. Se avisa por consola |
 | La serie A/B solo pinta semanas con envíos | Rellenar las vacías a cero haría parecer que la respuesta se hundió una semana en la que simplemente no escribiste a nadie |
 | El motor separa «país no cargado» de «nada aplica», y el informe lo dice | Confundirlos le decía al vendedor que no tiene nada que hacer en un país que ni siquiera habíamos mirado. Es el mismo principio que la etiqueta de pendiente de verificación: un hueco nuestro no se disfraza de respuesta |
+
+---
+
+# Paginación del panel de leads
+
+| Decisión | Por qué |
+| --- | --- |
+| Se pagina **en el origen**, no cortando la lista en el navegador | Cortar en el navegador no arregla nada: el problema era traerse la tabla entera. Ahora se piden solo las filas de la página |
+| Las cifras de cabecera son del **filtro entero**, no de la página | «Ingresos registrados: 300 $» cambiando al pasar de página sería inútil. Se calculan aparte, con consultas de recuento que no traen filas |
+| El importe se suma pidiendo solo la columna `revenue` de los leads que la tienen | Postgres no suma sin una función en la base; esto es lo más barato sin añadir una |
+| Los informes se piden solo para los leads visibles (`in`) | Antes se traían todos para cruzarlos con los leads |
+| El predicado de filtrado vive aparte y puro (`src/lib/leadFilters.ts`) | Es lo que aplica el modo local y lo que hay que replicar en la consulta a Supabase. Teniéndolo en un sitio se puede comprobar que los dos caminos filtran igual |
+| La búsqueda espera 300 ms antes de consultar | Si no, cada tecla es una consulta a la base |
+| Cambiar un filtro vuelve a la página 1, y si el filtro deja menos páginas se recoloca | Quedarte mirando una página 7 que ya no existe parece que la aplicación se ha roto |
+| Se limpian comas, paréntesis y porcentajes del texto buscado | La coma separa condiciones dentro de `or()` y el porcentaje es comodín: sin limpiarlos, escribir una coma rompe la consulta |
+| La exportación sigue trayéndolo todo, pero solo al pulsar | Es su cometido; lo que no tiene sentido es pagarlo cada vez que se abre la pantalla |
+| Tamaños de página: 25, 50 y 100 | Suficiente para trabajar sin convertirlo en una preferencia más que mantener |

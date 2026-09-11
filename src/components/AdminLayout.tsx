@@ -37,9 +37,10 @@ export default function AdminLayout({
 function useNewLeadCount(): number | null {
   const [count, setCount] = useState<number | null>(null);
   useEffect(() => {
+    // Cuenta en el servidor: no se trae la tabla para contar.
     storage
-      .listLeads()
-      .then((leads) => setCount(leads.filter((l) => l.status === 'nuevo').length))
+      .countNewLeads()
+      .then(setCount)
       .catch(() => setCount(null));
   }, []);
   return count;

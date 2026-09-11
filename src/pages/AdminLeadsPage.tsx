@@ -7,11 +7,19 @@ import {
   LEAD_TYPE_LABELS,
   storage,
   type Lead,
+  type LeadAggregates,
   type LeadStatus,
   type LeadType,
-  type Prospect,
   type Report,
 } from '../lib/storage';
+import {
+  clampPage,
+  DEFAULT_PAGE_SIZE,
+  pageCount,
+  PAGE_SIZES,
+  rangeLabel,
+  type LeadFilters,
+} from '../lib/leadFilters';
 import { buildAppealReplyEmail, buildDiagnosisEmail } from '../lib/emailTemplates';
 import { analyzeSuspensionEmail } from '../modules/appeals/analyzer';
 import { COUNTRIES, COUNTRY_LABELS, type CountryCode } from '../types/domain';
@@ -19,12 +27,14 @@ import { COUNTRIES, COUNTRY_LABELS, type CountryCode } from '../types/domain';
 /** Panel de leads: filtros, búsqueda, estado, ingresos y notas. */
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<LeadAggregates>({ total: 0, converted: 0, revenue: 0 });
   const [reports, setReports] = useState<Record<string, Report | undefined>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openLead, setOpenLead] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
-  const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   const [country, setCountry] = useState<CountryCode | ''>('');
   const [type, setType] = useState<LeadType | ''>('');
@@ -33,60 +43,65 @@ export default function AdminLeadsPage() {
   const [to, setTo] = useState('');
   const [query, setQuery] = useState('');
 
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  /** Texto de búsqueda ya reposado: evita una consulta por tecla pulsada. */
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const filters: LeadFilters = useMemo(
+    () => ({ type, status, country, from, to, search: debouncedQuery }),
+    [type, status, country, from, to, debouncedQuery],
+  );
+
+  // Cambiar un filtro vuelve a la primera página: si no, te quedas mirando una
+  // página 7 que ya no existe.
+  useEffect(() => setPage(0), [filters]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
     (async () => {
       try {
-        const [list, allReports, allProspects] = await Promise.all([
-          storage.listLeads(),
-          storage.listReports(),
-          storage.listProspects(),
+        // Se piden SOLO las filas de esta página, más las cifras del conjunto
+        // filtrado entero. Antes se traía la tabla completa al navegador.
+        const [pageResult, aggregates] = await Promise.all([
+          storage.queryLeads({ ...filters, limit: pageSize, offset: page * pageSize }),
+          storage.aggregateLeads(filters),
         ]);
-        setLeads(list);
-        setProspects(allProspects);
-        const byLead: Record<string, Report | undefined> = {};
-        for (const report of allReports) {
-          if (!byLead[report.leadId]) byLead[report.leadId] = report;
-        }
-        setReports(byLead);
+        if (cancelled) return;
+
+        // Y los informes solo de los leads que se ven.
+        const found = await storage.getReportsForLeads(pageResult.rows.map((l) => l.id));
+        if (cancelled) return;
+
+        setLeads(pageResult.rows);
+        setTotal(pageResult.total);
+        setStats(aggregates);
+        setReports(found);
+        setError(null);
+
+        // Si el filtro dejó menos páginas de las que había, se recoloca.
+        const corrected = clampPage(page, pageResult.total, pageSize);
+        if (corrected !== page) setPage(corrected);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error al cargar los leads.');
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Error al cargar los leads.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return leads.filter((lead) => {
-      if (type && lead.type !== type) return false;
-      if (status && lead.status !== status) return false;
-      if (country && !(lead.answers?.countries ?? []).includes(country)) return false;
-      const day = lead.createdAt.slice(0, 10);
-      if (from && day < from) return false;
-      if (to && day > to) return false;
-      if (needle) {
-        const haystack = `${lead.email} ${lead.companyName ?? ''}`.toLowerCase();
-        if (!haystack.includes(needle)) return false;
-      }
-      return true;
-    });
-  }, [leads, country, type, status, from, to, query]);
-
-  /**
-   * Tasa de conversión del grupo mostrado. Es la del filtro actual, no la de
-   * cada lead: un lead suelto no tiene tasa, o es 0 % o 100 %.
-   */
-  const stats = useMemo(() => {
-    const converted = filtered.filter((l) => l.status === 'convertido');
-    const revenue = filtered.reduce((sum, l) => sum + (l.revenue ?? 0), 0);
-    return {
-      total: filtered.length,
-      converted: converted.length,
-      rate: filtered.length ? converted.length / filtered.length : 0,
-      revenue,
+    return () => {
+      cancelled = true;
     };
-  }, [filtered]);
+  }, [filters, page, pageSize]);
+
+  const pages = pageCount(total, pageSize);
 
   /** Copia al portapapeles el correo que toca según el tipo de lead. */
   function copyEmail(lead: Lead, reference?: string) {
@@ -110,6 +125,9 @@ export default function AdminLeadsPage() {
   function replaceLead(updated: Lead | null) {
     if (!updated) return;
     setLeads((list) => list.map((l) => (l.id === updated.id ? updated : l)));
+    // Las cifras de arriba son del filtro entero, no de la página: cambiar un
+    // estado o un importe aquí las mueve, así que hay que recalcularlas.
+    storage.aggregateLeads(filters).then(setStats).catch(() => {});
   }
 
   async function changeStatus(id: string, next: LeadStatus) {
@@ -127,29 +145,50 @@ export default function AdminLeadsPage() {
    * `npm run report:weekly` mientras estemos en modo MOCK: los datos viven en
    * el localStorage del navegador y Node no puede leerlos desde fuera.
    */
-  function exportData() {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      leads,
-      reports: Object.values(reports).filter(Boolean),
-      prospects,
-      rulesVerified: 0,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'export.json';
-    a.click();
-    URL.revokeObjectURL(url);
+  async function exportData() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      // La exportación es lo único que sigue pidiendo TODO: es su cometido.
+      // Se pide al pulsar, no al abrir la pantalla.
+      const [allLeads, allReports, allProspects] = await Promise.all([
+        storage.listLeads(),
+        storage.listReports(),
+        storage.listProspects(),
+      ]);
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        leads: allLeads,
+        reports: allReports,
+        prospects: allProspects,
+        rulesVerified: 0,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se ha podido exportar.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
     <AdminLayout
       title="Leads"
       actions={
-        <button type="button" className="btn-secondary" onClick={exportData} title="Descarga export.json para npm run report:weekly">
-          Exportar datos
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={exportData}
+          disabled={exporting}
+          title="Descarga export.json con todo, para npm run report:weekly"
+        >
+          {exporting ? 'Exportando…' : 'Exportar datos'}
         </button>
       }
     >
@@ -218,15 +257,37 @@ export default function AdminLeadsPage() {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-4">
-        <Stat label="Leads mostrados" value={String(stats.total)} />
+        <Stat label="Leads del filtro" value={String(stats.total)} />
         <Stat label="Convertidos" value={String(stats.converted)} />
-        <Stat label="Conversión del grupo" value={`${Math.round(stats.rate * 100)} %`} />
+        <Stat
+          label="Conversión del grupo"
+          value={`${stats.total ? Math.round((stats.converted / stats.total) * 100) : 0} %`}
+        />
         <Stat label="Ingresos registrados" value={`${stats.revenue.toLocaleString('es-ES')} $`} />
       </div>
 
-      <p className="mt-5 text-sm text-slate-500">
-        {loading ? 'Cargando…' : `${filtered.length} lead(s) de ${leads.length}.`}
-      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">
+          {loading ? 'Cargando…' : `Mostrando ${rangeLabel(page * pageSize, leads.length, total)}`}
+        </p>
+        <label className="flex items-center gap-2 text-sm text-slate-500">
+          <span>Por página</span>
+          <select
+            className="rounded border border-slate-300 px-2 py-1"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(0);
+            }}
+          >
+            {PAGE_SIZES.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[900px] border-collapse text-sm">
@@ -243,7 +304,7 @@ export default function AdminLeadsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((lead) => {
+            {leads.map((lead) => {
               const report = reports[lead.id];
               const isOpen = openLead === lead.id;
               return (
@@ -336,7 +397,7 @@ export default function AdminLeadsPage() {
                 </Fragment>
               );
             })}
-            {!loading && filtered.length === 0 && (
+            {!loading && leads.length === 0 && (
               <tr>
                 <td colSpan={8} className="py-6 text-center text-slate-500">
                   No hay leads con esos filtros.
@@ -346,6 +407,30 @@ export default function AdminLeadsPage() {
           </tbody>
         </table>
       </div>
+
+      <nav className="mt-5 flex flex-wrap items-center justify-between gap-3" aria-label="Paginación">
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={page === 0 || loading}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+        >
+          Anterior
+        </button>
+
+        <p className="text-sm text-slate-500">
+          Página {pages === 0 ? 1 : page + 1} de {pages}
+        </p>
+
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={page + 1 >= pages || loading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Siguiente
+        </button>
+      </nav>
     </AdminLayout>
   );
 }

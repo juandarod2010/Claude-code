@@ -149,6 +149,36 @@ test.describe('Panel interno', () => {
     await expect(page.locator('body')).toContainText('Primer contacto.');
   });
 
+  test('los leads se paginan y los filtros no se saltan páginas', async ({ page }) => {
+    // Se crean 7 leads por la vía normal para que haya varias páginas.
+    for (let i = 0; i < 7; i += 1) {
+      await page.goto('/appeals');
+      await page.getByPlaceholder('tu@empresa.com').fill(`pag-${i}@ejemplo.invalid`);
+      await page.locator('textarea').fill('Order Defect Rate above target. Account deactivated.');
+      await page.getByRole('button', { name: /Analizar mi caso/ }).click();
+      await expect(page.locator('body')).toContainText('Recibido');
+    }
+
+    await entrarEnAdmin(page);
+    await page.getByLabel('Por página').selectOption('25');
+    await expect(page.locator('body')).toContainText('de 7');
+
+    // Con 25 por página caben todos: no hay siguiente.
+    await expect(page.getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Anterior' })).toBeDisabled();
+
+    // El total de arriba es del filtro entero, no de la página.
+    await expect(page.locator('body')).toContainText('Leads del filtro');
+
+    // Un filtro que no deja nada recoloca a la página 1 y lo dice.
+    await page.getByRole('textbox').first().fill('no-existe-nadie-asi');
+    await expect(page.locator('body')).toContainText('No hay leads con esos filtros');
+    await expect(page.locator('body')).toContainText('Página 1 de 1');
+
+    await page.getByRole('textbox').first().fill('');
+    await expect(page.locator('body')).toContainText('de 7');
+  });
+
   test('rellenar reglas: valida, avisa y guarda', async ({ page }) => {
     await entrarEnAdmin(page, '/admin/fill-rules');
 

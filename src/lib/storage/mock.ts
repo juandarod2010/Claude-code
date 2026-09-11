@@ -1,4 +1,5 @@
 import type { ObligationRule } from '../../data/rules/schema';
+import { aggregate, matchesFilters, type LeadFilters, type LeadQuery } from '../leadFilters';
 import { buildReportReference } from '../reportReference';
 import { buildVersion, type RuleVersion } from '../rulesHistory';
 import type {
@@ -84,6 +85,13 @@ function stripMeta(rule: StoredRule | ObligationRule | null): ObligationRule | n
   return clean;
 }
 
+/** Leads que pasan el filtro, ya ordenados de más reciente a más antiguo. */
+function filteredLeads(filters: LeadFilters): Lead[] {
+  return read<Lead>(KEYS.leads)
+    .filter((lead) => matchesFilters(lead, filters))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 function patchLead(id: string, mutate: (lead: Lead) => Lead): Lead | null {
   const leads = read<Lead>(KEYS.leads);
   const index = leads.findIndex((l) => l.id === id);
@@ -127,6 +135,22 @@ export const mockStorage: Storage = {
     return read<Lead>(KEYS.leads).find((l) => l.id === id) ?? null;
   },
 
+  async queryLeads(query: LeadQuery) {
+    const matching = filteredLeads(query);
+    return {
+      rows: matching.slice(query.offset, query.offset + query.limit),
+      total: matching.length,
+    };
+  },
+
+  async aggregateLeads(filters: LeadFilters) {
+    return aggregate(filteredLeads(filters));
+  },
+
+  async countNewLeads() {
+    return read<Lead>(KEYS.leads).filter((l) => l.status === 'nuevo').length;
+  },
+
   async updateLead(id, patch: LeadPatch) {
     return patchLead(id, (lead) => ({ ...lead, ...patch, updatedAt: new Date().toISOString() }));
   },
@@ -160,6 +184,18 @@ export const mockStorage: Storage = {
 
   async getReportByLead(leadId) {
     return read<Report>(KEYS.reports).find((r) => r.leadId === leadId) ?? null;
+  },
+
+  async getReportsForLeads(leadIds) {
+    const wanted = new Set(leadIds);
+    const byLead: Record<string, Report> = {};
+    for (const report of read<Report>(KEYS.reports)) {
+      if (!wanted.has(report.leadId)) continue;
+      // Si hubiera varios informes del mismo lead, gana el más reciente.
+      const current = byLead[report.leadId];
+      if (!current || report.createdAt > current.createdAt) byLead[report.leadId] = report;
+    }
+    return byLead;
   },
 
   async listReports() {
