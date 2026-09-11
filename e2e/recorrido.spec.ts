@@ -69,6 +69,14 @@ test.describe('Track B — cumplimiento', () => {
     await page.getByRole('button', { name: 'Descargar en PDF' }).click();
     const fichero = await descarga;
     expect(fichero.suggestedFilename()).toMatch(/^complyo-informe-\d{8}-[a-z0-9]{4}\.pdf$/);
+
+    // El botón de «Resolverlo» tiene que hacer algo VISIBLE siempre. Cuando era
+    // un enlace mailto, en un navegador sin gestor de correo el clic no hacía
+    // nada y el visitante se iba pensando que la página estaba rota.
+    await page.getByRole('button', { name: 'Resolverlo' }).click();
+    await expect(page.locator('body')).toContainText('Vamos a ello');
+    await expect(page.locator('body')).toContainText('hola@complyo.eu');
+    await expect(page.locator('body')).toContainText(/Quiero resolverlo — INFORME-\d{8}/);
   });
 
   test('el diagnóstico no deja avanzar sin responder', async ({ page }) => {

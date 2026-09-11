@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Footer from '../components/Footer';
 import RiskPill from '../components/RiskPill';
@@ -229,19 +229,99 @@ export default function InformePage() {
 
           {/* 5 */}
           <Section n={5} title={REPORT_CTA_LABEL}>
-            <a
-              className="btn-primary w-full sm:w-auto"
-              href={`mailto:${BRAND.contactEmail}?subject=${encodeURIComponent(
-                `Quiero resolverlo — ${report.reference}`,
-              )}`}
-            >
-              {REPORT_CTA_LABEL}
-            </a>
+            <ResolverCta reference={report.reference} />
           </Section>
         </article>
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+/**
+ * Llamada a la acción del informe.
+ *
+ * ANTES esto era un enlace `mailto:` a secas. En un navegador sin cliente de
+ * correo asociado —lo normal si usas webmail— el clic no hacía NADA: ni abría
+ * nada, ni daba error. El visitante veía que no pasaba nada y se iba.
+ *
+ * Ahora el botón siempre abre esta confirmación dentro de la página. El enlace
+ * al gestor de correo sigue estando, pero como opción secundaria: si no
+ * funciona, ahí está la dirección para copiarla.
+ */
+function ResolverCta({ reference }: { reference: string }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const subject = `Quiero resolverlo — ${reference}`;
+  const mailto = `mailto:${BRAND.contactEmail}?subject=${encodeURIComponent(subject)}`;
+
+  useEffect(() => {
+    if (open) panelRef.current?.focus();
+  }, [open]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(`${BRAND.contactEmail} — ${subject}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Portapapeles bloqueado: la dirección está escrita ahí al lado.
+      setCopied(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="btn-primary w-full sm:w-auto"
+        aria-expanded={false}
+        onClick={() => setOpen(true)}
+      >
+        {REPORT_CTA_LABEL}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      ref={panelRef}
+      tabIndex={-1}
+      className="rounded-xl border border-brand-600 bg-brand-50 p-5 focus:outline-none"
+    >
+      <h3 className="text-lg font-bold">Vamos a ello.</h3>
+      <p className="mt-2 text-sm text-slate-700">
+        Escríbenos con el número de informe y te contestamos con los siguientes pasos y el
+        presupuesto cerrado por país.
+      </p>
+
+      <dl className="mt-4 space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-sm">
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+          <dt className="font-semibold text-slate-500 sm:w-32 sm:shrink-0">Escribe a</dt>
+          <dd className="font-mono text-ink">{BRAND.contactEmail}</dd>
+        </div>
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+          <dt className="font-semibold text-slate-500 sm:w-32 sm:shrink-0">Asunto</dt>
+          <dd className="text-ink">{subject}</dd>
+        </div>
+      </dl>
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button type="button" className="btn-primary" onClick={copy}>
+          {copied ? 'Copiado' : 'Copiar correo y asunto'}
+        </button>
+        <a className="btn-secondary" href={mailto}>
+          Abrir mi gestor de correo
+        </a>
+      </div>
+
+      <p className="mt-3 text-xs text-slate-600">
+        Si el botón de tu gestor de correo no hace nada, es que tu navegador no tiene ninguno
+        configurado: copia la dirección y escríbenos desde donde uses el correo.
+      </p>
     </div>
   );
 }
