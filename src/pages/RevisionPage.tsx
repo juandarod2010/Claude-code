@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 import { BRAND, ENTRY_OFFER } from '../config/brand';
 import { analyzeSuspensionEmail, ANALYZER_DISCLAIMER, severityLabel } from '../modules/appeals/analyzer';
 import { storage } from '../lib/storage';
+import { composeRevisionStory } from '../lib/revisionLead';
 
 /**
  * Página de la oferta de entrada: revisión de Plan of Action por 59 $.
@@ -41,12 +42,18 @@ export default function RevisionPage() {
     setSending(true);
     setError(null);
     try {
+      // El analizador recibe el correo a secas, NO el texto compuesto: el
+      // borrador del cliente metería palabras que desvían la clasificación.
       const analysis = analyzeSuspensionEmail(story);
-      const lead = await storage.createAppealLead({
+      // Todo lo que hay que conservar viaja dentro del alta. No se escribe nada
+      // después: el visitante anónimo puede INSERTAR pero no ACTUALIZAR, así
+      // que una segunda escritura fallaría en Supabase y perdería el borrador.
+      // Ver src/lib/revisionLead.ts.
+      await storage.createAppealLead({
         email: email.trim().toLowerCase(),
         companyName: null,
         appeal: {
-          story: story.trim(),
+          story: composeRevisionStory(story, draft),
           suspensionType: analysis.type,
           suspensionTypeLabel: analysis.typeLabel,
           severity: analysis.severity,
@@ -54,16 +61,6 @@ export default function RevisionPage() {
           daysSuspended: null,
         },
       });
-      // El origen se anota como nota en vez de como columna nueva: no hace falta
-      // una migración para distinguir de dónde viene el lead, y en /admin/leads
-      // se lee igual de bien.
-      await storage.addLeadNote(
-        lead.id,
-        `ORIGEN: ${ENTRY_OFFER.name} (${ENTRY_OFFER.price.label}).` +
-          (draft.trim()
-            ? `\n\nBORRADOR PEGADO POR EL CLIENTE:\n${draft.trim()}`
-            : '\n\nNo ha pegado borrador: pídeselo en la primera respuesta.'),
-      );
       setSent(true);
     } catch (e) {
       setError(

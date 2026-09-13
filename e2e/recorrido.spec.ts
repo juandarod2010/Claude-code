@@ -135,6 +135,14 @@ test.describe('Oferta de entrada', () => {
 
     await expect(page.locator('body')).toContainText('Recibido');
     await expect(page.locator('body')).toContainText('No pagas nada ahora');
+
+    // Y el caso llega al panel con el origen y el borrador dentro del propio
+    // lead: no se escribe nada después del alta, porque el visitante anónimo
+    // no puede actualizar. Ver src/lib/revisionLead.ts.
+    await entrarEnAdmin(page);
+    await expect(page.locator('body')).toContainText('revision@ejemplo.invalid');
+    await page.getByRole('textbox').first().fill('revision@ejemplo.invalid');
+    await expect(page.locator('table')).toContainText('Intellectual Property');
   });
 
   test('mensajes: el gancho se adapta a lo que ha escrito el prospecto', async ({ page }) => {

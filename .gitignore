@@ -12,3 +12,6 @@ reports/*.json
 coverage
 test-results
 playwright-report
+
+# Artefactos de compilación incremental de TypeScript
+*.tsbuildinfo
