@@ -6,7 +6,7 @@
  *
  * Uso: npm run predeploy:check
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { APPEALS, BRAND, DISCLAIMER, SERVICE_COMMITMENTS } from '../config/brand';
 import { RULES } from '../data/rules';
@@ -118,8 +118,26 @@ if (env.VITE_SUPABASE_SERVICE_ROLE || env.SUPABASE_SERVICE_ROLE_KEY) {
 const indexPath = resolve(process.cwd(), 'dist/index.html');
 if (!existsSync(indexPath)) {
   add('aviso', 'No hay build reciente en dist/.', 'Ejecuta npm run build antes de desplegar.');
-} else if (readFileSync(indexPath, 'utf8').includes('complyo-dev')) {
-  add('bloqueante', 'El build contiene la contraseña de desarrollo.', 'Reconstruye con las variables de entorno correctas.');
+} else {
+  // La contraseña no aparece en index.html, sino dentro del JavaScript: Vite
+  // sustituye import.meta.env.VITE_ADMIN_PASSWORD al empaquetar. Mirar solo
+  // index.html era no mirar, y el aviso nunca podía saltar.
+  const assetsDir = resolve(process.cwd(), 'dist/assets');
+  const bundles = existsSync(assetsDir)
+    ? readdirSync(assetsDir)
+        .filter((f) => f.endsWith('.js'))
+        .map((f) => resolve(assetsDir, f))
+    : [];
+  const leaked = [indexPath, ...bundles].filter((file) =>
+    readFileSync(file, 'utf8').includes('complyo-dev'),
+  );
+  if (leaked.length > 0) {
+    add(
+      'bloqueante',
+      `El build contiene la contraseña de desarrollo (${leaked.map((f) => f.replace(`${process.cwd()}/`, '')).join(', ')}).`,
+      'Define VITE_ADMIN_PASSWORD y reconstruye con npm run build. El bundle es público: cualquiera puede leerlo.',
+    );
+  }
 }
 
 for (const file of ['vercel.json', 'netlify.toml']) {

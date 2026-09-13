@@ -61,7 +61,7 @@ async function run(): Promise<void> {
   // --- Supabase ------------------------------------------------------------
   if (credentials) {
     const db = createClient(credentials.url, credentials.key);
-    for (const table of ['leads', 'informes', 'prospectos', 'reglas']) {
+    for (const table of ['leads', 'informes', 'prospectos', 'reglas', 'reglas_historial']) {
       try {
         const { error } = await db.from(table).select('id').limit(1);
         if (!error) {
