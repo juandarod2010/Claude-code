@@ -176,10 +176,40 @@ function fail(context: string, error: { message: string } | null): void {
 
 export function createSupabaseStorage(db: SupabaseClient): Storage {
 
+  /**
+   * Alta de un lead desde una página pública.
+   *
+   * NO SE RELEE LA FILA DESPUÉS DE INSERTARLA, y es deliberado. El visitante
+   * usa la clave `anon`, que tiene política de INSERT sobre `leads` pero
+   * NINGUNA de SELECT (migración 0001: «sin política, RLS deniega»). Un
+   * `.insert().select()` pide a PostgREST devolver la fila insertada, la
+   * lectura la deniega RLS y `.single()` acaba lanzando: el lead quedaría
+   * guardado y el visitante vería un error. Es el mismo motivo por el que
+   * `createReport` genera su identificador en el cliente.
+   *
+   * Así que la fila se construye entera aquí —incluidos los valores que en
+   * otro caso pondría la base por defecto— y se devuelve lo que acabamos de
+   * escribir, sin releer nada.
+   */
   async function insertLead(row: Record<string, unknown>): Promise<Lead> {
-    const { data, error } = await db.from('leads').insert(row).select().single();
+    const now = new Date().toISOString();
+    const complete = {
+      id: crypto.randomUUID(),
+      created_at: now,
+      updated_at: now,
+      status: 'nuevo',
+      variant: null,
+      revenue: null,
+      notes: [],
+      answers: null,
+      appeal: null,
+      company_name: null,
+      ...row,
+    };
+
+    const { error } = await db.from('leads').insert(complete);
     fail('createLead', error);
-    return toLead(data as LeadRow);
+    return toLead(complete as unknown as LeadRow);
   }
 
   /** Anota una entrada en el historial de la base de reglas. */
@@ -326,22 +356,22 @@ export function createSupabaseStorage(db: SupabaseClient): Storage {
       // El identificador y la referencia se generan en el cliente: el visitante
       // anónimo puede INSERTAR pero no ACTUALIZAR, así que la referencia tiene
       // que ir ya dentro del insert.
+      // Y tampoco se relee la fila: `anon` no tiene política de SELECT sobre
+      // `informes`, así que un `.select()` aquí fallaría igual que en
+      // `insertLead`. Ver el comentario de esa función.
       const id = crypto.randomUUID();
       const createdAt = new Date().toISOString();
-      const { data, error } = await db
-        .from('informes')
-        .insert({
-          id,
-          lead_id: leadId,
-          created_at: createdAt,
-          result,
-          rules_snapshot_size: result.obligations.length,
-          reference: buildReportReference(createdAt, id),
-        })
-        .select()
-        .single();
+      const row = {
+        id,
+        lead_id: leadId,
+        created_at: createdAt,
+        result,
+        rules_snapshot_size: result.obligations.length,
+        reference: buildReportReference(createdAt, id),
+      };
+      const { error } = await db.from('informes').insert(row);
       fail('createReport', error);
-      return toReport(data as ReportRow);
+      return toReport(row as ReportRow);
     },
 
     async getReport(id) {
