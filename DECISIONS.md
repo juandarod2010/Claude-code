@@ -145,3 +145,29 @@ NEXT-STEPS.md, no en el código.
 | Se limpian comas, paréntesis y porcentajes del texto buscado | La coma separa condiciones dentro de `or()` y el porcentaje es comodín: sin limpiarlos, escribir una coma rompe la consulta |
 | La exportación sigue trayéndolo todo, pero solo al pulsar | Es su cometido; lo que no tiene sentido es pagarlo cada vez que se abre la pantalla |
 | Tamaños de página: 25, 50 y 100 | Suficiente para trabajar sin convertirlo en una preferencia más que mantener |
+
+---
+
+# Fase 5 — Oferta de entrada de 59 $
+
+El motivo del cambio, antes que las decisiones: al terminar la fase 4 había
+cuatro fases de infraestructura y **cero dólares cobrados**. No por falta de
+código, sino porque las dos ofertas construidas dependen de cosas que el código
+no puede resolver (base de reglas verificada, socio en la UE, revisión de
+abogado, historial de casos cerrados). La oferta de entrada se elige por ser la
+única que se puede entregar hoy con lo que ya está hecho.
+
+| Decisión | Por qué |
+| --- | --- |
+| Se vende una **revisión** de Plan of Action, no la redacción completa | Es lo que se puede entregar en 24 horas sin mentir, y lo que se apoya solo en piezas terminadas: el analizador y el motor de POA. Ni dato regulatorio, ni socio, ni abogado |
+| Precio 59 $ | Mercado consultado el 13/09/2026: Appeal Guru 1.495 $, gig de Fiverr 395 $, consultoría 318 $, suelo de Fiverr 15–100 $. 59 $ queda por encima del tramo basura y muy por debajo del de redacción completa, y dos ventas pasan del objetivo semanal |
+| Se cobra **después** de entregar | Quita el único motivo real para no probar con un desconocido sin historial. A este precio, el riesgo de impago pesa menos que el de no vender nada |
+| La garantía es de **plazo**, no de resultado | Prometer reactivación es prometer una decisión que toma Amazon. La única promesa que depende de nosotros es entregar en 24 horas |
+| Un gancho distinto por cada uno de los 11 tipos de suspensión | Es lo que separa el mensaje de los otros veinte que recibe esa semana. Un test comprueba que los 11 son distintos entre sí: si alguien los deja iguales, salta |
+| Las tasas del embudo se separan en medidas y de arranque (`lib/funnel.ts`) | La tentación es proyectar con las tasas que uno quisiera tener. Con menos de 40 prospectos la pantalla dice que no significan nada y usa las conservadoras |
+| Una tasa observada de 0 % **no** se usa para proyectar | No se puede dividir por cero, y además significa otra cosa: que falla el canal o el mensaje. Se dice en claro en vez de pintar un número roto |
+| Los ingresos de la semana se cuentan sobre `updatedAt` | El ingreso se anota al cobrar, que es una edición del lead. La alternativa era un campo `paidAt` que alguien tiene que acordarse de rellenar |
+| El origen del lead se anota como **nota**, no como columna nueva | Distinguir de dónde viene no justifica una migración, y en `/admin/leads` se lee igual de bien |
+| Los textos de la landing pasan a ser función, no constante | La fecha de aplicación (12/08/2026) se pasó sola y la página seguía anunciándola en futuro. Un texto que caduca en silencio delata que la página lleva meses sin tocarse. Ahora el tiempo verbal se adapta, y hay tests que lo fijan |
+| Los mensajes tienen pantalla propia (`/admin/mensajes`) | Unas plantillas que no se copian en dos segundos no se usan: acabas escribiendo a mano, cada mensaje sale distinto y las métricas dejan de comparar nada |
+| `/revision` se enlaza desde la landing y desde `/appeals` | Una página a la que no se llega convierte cero. Y al que no vaya a pagar 1.500 $ más vale ofrecerle los 59 $ que perderlo |

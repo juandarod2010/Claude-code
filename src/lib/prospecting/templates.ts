@@ -1,4 +1,4 @@
-import { BRAND, PRICING, REGULATION } from '../../config/brand';
+import { BRAND, PRICING, REGULATION, regulationInForce } from '../../config/brand';
 import { COUNTRY_LABELS, type CountryCode } from '../../types/domain';
 import type { ProspectVariant } from '../storage/types';
 
@@ -67,7 +67,7 @@ He mirado tu ficha (${input.listingRef}) porque vendes a ${country} y he visto e
 
 ${bullets(input.missing)}
 
-Desde el ${REGULATION.applicationDate}, el ${REGULATION.reference} obliga al marketplace a comprobar tu registro de responsabilidad ampliada del productor antes de mantener publicados tus anuncios. Si el dato no está, el canal deja de publicar el producto. No es una multa que discutes después: es el anuncio que deja de vender.
+${regulationInForce() ? 'Desde el' : 'A partir del'} ${REGULATION.applicationDate}, el ${REGULATION.reference} ${regulationInForce() ? 'obliga' : 'obligará'} al marketplace a comprobar tu registro de responsabilidad ampliada del productor antes de mantener publicados tus anuncios. Si el dato no está, el canal deja de publicar el producto. No es una multa que discutes después: es el anuncio que deja de vender.
 
 ${OFFER(country)}
 
@@ -85,7 +85,7 @@ He mirado tu ficha (${input.listingRef}) porque vendes a ${country} y he visto e
 
 ${bullets(input.missing)}
 
-Vender en ${country} sin estar dado de alta en el registro de responsabilidad ampliada del productor te expone a la sanción económica que prevea la normativa de ese país, además de a la reclamación de las cantidades no declaradas de ejercicios anteriores. El ${REGULATION.reference} lo pone en el radar del marketplace a partir del ${REGULATION.applicationDate}, así que deja de ser un riesgo teórico.
+Vender en ${country} sin estar dado de alta en el registro de responsabilidad ampliada del productor te expone a la sanción económica que prevea la normativa de ese país, además de a la reclamación de las cantidades no declaradas de ejercicios anteriores. El ${REGULATION.reference} lo ${regulationInForce() ? 'pone' : 'pondrá'} en el radar del marketplace desde el ${REGULATION.applicationDate}, así que deja de ser un riesgo teórico.
 
 ${OFFER(country)}
 

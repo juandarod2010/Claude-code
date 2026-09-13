@@ -7,6 +7,12 @@ Dos líneas de negocio sobre la misma base de código:
 - **Track B — cumplimiento.** Informes de exposición al cumplimiento RAP
   (responsabilidad ampliada del productor) en la Unión Europea.
 
+**Lo que se vende hoy es la oferta de entrada:** revisión de Plan of Action por
+59 $ en 24 horas, en `/revision`. Las otras dos ofertas (informe RAP de 97 $ y
+apelación completa de 1.500 $) están construidas pero bloqueadas por datos,
+socios y permisos que no dependen del código. El porqué, las cuentas y lo que
+hay que hacer cada día están en **ACCION-AHORA.md**.
+
 No es un producto completo, y a propósito.
 
 ```
@@ -68,8 +74,11 @@ la fecha en que la leíste.
 | --- | --- | --- |
 | `/` | pública | Landing de una pantalla (Track B) |
 | `/appeals` | pública | Landing de apelaciones con analizador (Track A) |
+| `/revision` | pública | **Oferta de entrada**: revisión de Plan of Action, 59 $ en 24 h |
 | `/diagnostico` | pública | 8 preguntas, una por pantalla |
 | `/informe/:id` | por enlace | Informe en pantalla + descarga PDF |
+| `/admin/metas` | contraseña | Cuántos prospectos hacen falta esta semana para llegar a 100 $ |
+| `/admin/mensajes` | contraseña | Mensajes de la oferta de entrada, listos para copiar |
 | `/admin/leads` | contraseña | Leads de los dos tracks: filtros, paginación, estado, ingresos, notas |
 | `/admin/rules-status` | contraseña | Cuántas de las 18 obligaciones están completas |
 | `/admin/poa` | contraseña | Editor del Plan of Action (Track A) |

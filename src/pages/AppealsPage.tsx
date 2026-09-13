@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
-import { APPEALS, BRAND } from '../config/brand';
+import { APPEALS, BRAND, ENTRY_OFFER } from '../config/brand';
 import { analyzeSuspensionEmail, severityLabel } from '../modules/appeals/analyzer';
 import { storage } from '../lib/storage';
 
@@ -186,6 +186,18 @@ export default function AppealsPage() {
                 </button>
                 <p className="text-xs text-slate-500">
                   No se cobra nada ahora. Te escribo con la lectura del caso y decides.
+                </p>
+                {/*
+                  Salida hacia la oferta de entrada. 1.500 $ es mucho dinero para
+                  alguien que no te conoce de nada: al que no vaya a dar ese paso,
+                  más vale ofrecerle el de 59 $ que perderlo.
+                */}
+                <p className="text-sm text-slate-600">
+                  ¿Te parece mucho para empezar? Si ya tienes un plan escrito, te lo{' '}
+                  <Link to="/revision" className="font-medium text-primary underline">
+                    reviso por {ENTRY_OFFER.price.label} en {ENTRY_OFFER.deliveryHours} horas
+                  </Link>
+                  .
                 </p>
               </section>
             </>

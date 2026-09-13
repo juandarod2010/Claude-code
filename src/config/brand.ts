@@ -34,7 +34,36 @@ export const UNVERIFIED_BADGE = 'PENDIENTE DE VERIFICACIÓN — no usar con clie
 export const REGULATION = {
   reference: 'Reglamento (UE) 2025/40',
   applicationDate: '12 de agosto de 2026',
+  /** La misma fecha en ISO, para poder compararla. Ver `regulationInForce()`. */
+  applicationDateIso: '2026-08-12',
 } as const;
+
+/**
+ * ¿La fecha de aplicación ya ha pasado?
+ *
+ * POR QUÉ EXISTE. Los textos estaban escritos en futuro («el 12 de agosto de
+ * 2026, Amazon puede desactivar tus listings») y esa fecha se pasó sola: el
+ * mismo texto que el primer día creaba urgencia, el día después delataba que la
+ * página llevaba meses sin tocarse. A un visitante que sabe de la norma le dice
+ * que no estamos al día, y es de las cosas que hunden una conversión sin que te
+ * enteres. Ahora el texto se adapta en vez de caducar.
+ */
+export function regulationInForce(now: Date = new Date()): boolean {
+  return now.getTime() >= Date.parse(`${REGULATION.applicationDateIso}T00:00:00Z`);
+}
+
+/** Titular de la landing, en el tiempo verbal que toca. */
+export function regulationHeadline(now: Date = new Date()): string {
+  return regulationInForce(now)
+    ? `Desde el ${REGULATION.applicationDate}, Amazon puede desactivar tus listings en Europa.`
+    : `El ${REGULATION.applicationDate}, Amazon puede desactivar tus listings en Europa.`;
+}
+
+/** Primera línea de la landing, igual. */
+export function regulationLead(now: Date = new Date()): string {
+  const verb = regulationInForce(now) ? 'obliga' : 'obligará';
+  return `El ${REGULATION.reference} ${verb} a los marketplaces a comprobar tu registro de responsabilidad ampliada del productor antes de mantener activos tus anuncios.`;
+}
 
 /** Precios del servicio. Son precios nuestros, no importes regulatorios. */
 export const PRICING = {
@@ -44,15 +73,23 @@ export const PRICING = {
 } as const;
 
 /** Textos de la landing. Sin testimonios, sin logos, sin cifras no demostrables. */
-export const LANDING_COPY = {
-  headline: 'El 12 de agosto de 2026, Amazon puede desactivar tus listings en Europa.',
-  lines: [
-    `El ${REGULATION.reference} obliga a los marketplaces a comprobar tu registro de responsabilidad ampliada del productor antes de mantener activos tus anuncios.`,
-    'Si vendes a la Unión Europea sin estar dado de alta en el país de destino, el canal deja de publicar tus productos. No hay aviso gradual.',
-    `Responde 8 preguntas y te decimos, país por país, qué te falta y qué pasa si no lo arreglas. Informe en 24 horas por ${PRICING.report.label}.`,
-  ],
-  ctaLabel: 'Ver mi exposición',
-} as const;
+/**
+ * Textos de la landing. Sin testimonios, sin logos, sin cifras no demostrables.
+ *
+ * Es una función y no una constante porque el titular depende de si la fecha de
+ * aplicación ya ha pasado. Ver `regulationHeadline()`.
+ */
+export function landingCopy(now: Date = new Date()) {
+  return {
+    headline: regulationHeadline(now),
+    lines: [
+      regulationLead(now),
+      'Si vendes a la Unión Europea sin estar dado de alta en el país de destino, el canal deja de publicar tus productos. No hay aviso gradual.',
+      `Responde 8 preguntas y te decimos, país por país, qué te falta y qué pasa si no lo arreglas. Informe en 24 horas por ${PRICING.report.label}.`,
+    ],
+    ctaLabel: 'Ver mi exposición',
+  };
+}
 
 export const REPORT_CTA_LABEL = 'Resolverlo';
 
@@ -91,6 +128,47 @@ export const APPEALS = {
    * Mientras sea null, la página no enseña ninguna cifra. Ver DECISIONS.md.
    */
   successRate: null as { rate: number; sampleSize: number; since: string } | null,
+} as const;
+
+/**
+ * OFERTA DE ENTRADA — revisión de Plan of Action.
+ *
+ * POR QUÉ EXISTE. Las dos ofertas anteriores (informe RAP de 97 $ y apelación
+ * de 1.500 $) están bloqueadas por cosas que no dependen del código: la base de
+ * reglas real, el socio en la Unión Europea, el abogado y un historial de casos
+ * cerrados. Sin nada de eso no se puede cobrar un dólar. Esta sí se puede
+ * entregar hoy, porque se apoya solo en piezas ya terminadas y sin bloqueantes:
+ * el analizador (`modules/appeals/analyzer.ts`) y el motor de Plan of Action
+ * (`modules/appeals/poa-template.ts`).
+ *
+ * POR QUÉ 59 $. Es el precio más alto que sigue siendo una decisión individual
+ * —se paga sin pedir presupuesto ni consultarlo con nadie— y a la vez hace que
+ * dos ventas pasen del objetivo de 100 $/semana. Ver `lib/funnel.ts`.
+ *
+ * QUÉ NO PROMETE. Ni reactivación, ni plazos de Amazon, ni tasa de éxito. Lo
+ * que se vende es un documento revisado y una lista de lo que falta, entregado
+ * en 24 horas. Es lo único que podemos cumplir siempre.
+ */
+export const ENTRY_OFFER = {
+  price: { amount: 59, currency: 'USD', label: '59 $' },
+  name: 'Revisión de Plan of Action',
+  deliveryHours: 24,
+  /** Lo que recibe el cliente. Cada línea tiene que ser entregable sin excepción. */
+  deliverables: [
+    'Tu Plan of Action leído entero y reescrito donde haga falta, en el formato que espera el revisor.',
+    'La causa raíz reformulada: es el punto por el que se rechaza la mayoría de los planes.',
+    'Lista de las pruebas que te faltan, una por una, y qué documento sirve para cada una.',
+    'Qué quitar. Los planes largos se rechazan más que los cortos y concretos.',
+  ],
+  /**
+   * Garantía. Es reembolso, no resultado: prometer reactivación sería prometer
+   * una decisión que toma Amazon, no nosotros.
+   */
+  guarantee:
+    'Si no te entrego la revisión dentro de 24 horas, te devuelvo el dinero. No garantizo la reactivación: esa decisión es de Amazon y nadie honesto puede venderla.',
+  /** Escalón siguiente, una vez hay un caso atendido y confianza. */
+  upsell:
+    'Si después de leerlo prefieres que lleve el caso entero —redacción, envío y las réplicas hasta cerrar—, el análisis completo cuesta 1.500 $ y te descuento lo que ya has pagado.',
 } as const;
 
 /**

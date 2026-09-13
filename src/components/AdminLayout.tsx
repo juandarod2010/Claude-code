@@ -7,6 +7,8 @@ import { storage } from '../lib/storage';
 
 const LINKS = [
   { to: '/admin/leads', label: 'Leads' },
+  { to: '/admin/metas', label: 'Metas' },
+  { to: '/admin/mensajes', label: 'Mensajes' },
   { to: '/admin/poa', label: 'Plan of Action' },
   { to: '/prospeccion', label: 'Prospección' },
   { to: '/admin/ab', label: 'A/B' },

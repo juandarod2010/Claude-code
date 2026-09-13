@@ -113,6 +113,57 @@ test.describe('Track A — apelaciones', () => {
   });
 });
 
+test.describe('Oferta de entrada', () => {
+  test('revisión de plan: analiza, recoge el lead y no cobra por adelantado', async ({ page }) => {
+    await page.goto('/revision');
+
+    // El precio está a la vista antes de pedir ningún dato.
+    await expect(page.locator('body')).toContainText('59 $');
+    await expect(page.locator('body')).toContainText('24 horas');
+
+    await page
+      .getByPlaceholder(/Pega aquí el mensaje completo/)
+      .fill('Your listing was removed due to an intellectual property complaint from a rights owner.');
+
+    // El analizador da algo útil antes de pedir el correo.
+    await expect(page.locator('body')).toContainText('Intellectual Property');
+    await expect(page.locator('body')).toContainText('orientativo');
+
+    await page.getByPlaceholder(/Aunque esté a medias/).fill('Mi borrador: pedimos perdón.');
+    await page.getByPlaceholder('tu@correo.com').fill('revision@ejemplo.invalid');
+    await page.getByRole('button', { name: /Pedir la revisión/ }).click();
+
+    await expect(page.locator('body')).toContainText('Recibido');
+    await expect(page.locator('body')).toContainText('No pagas nada ahora');
+  });
+
+  test('mensajes: el gancho se adapta a lo que ha escrito el prospecto', async ({ page }) => {
+    await entrarEnAdmin(page, '/admin/mensajes');
+
+    // Sin cita, avisa en vez de dejar copiar un mensaje genérico.
+    await expect(page.locator('body')).toContainText('no lo contesta nadie');
+
+    await page
+      .getByPlaceholder(/Pega su mensaje del foro/)
+      .fill('Me han quitado el listing por una queja de trademark de un rights owner.');
+
+    // El gancho concreto del tipo detectado, no el genérico.
+    await expect(page.locator('body')).toContainText('intellectual_property');
+    await expect(page.locator('body')).toContainText('retirada de la queja por parte del titular');
+
+    // Y las respuestas a objeciones están todas.
+    await expect(page.locator('body')).toContainText('"No me interesa"');
+    await expect(page.locator('body')).toContainText('no insisto');
+  });
+
+  test('metas: convierte el objetivo en prospectos por día', async ({ page }) => {
+    await entrarEnAdmin(page, '/admin/metas');
+    await expect(page.locator('body')).toContainText('Prospectos / día');
+    // Sin muestra, se avisa de que las tasas todavía no significan nada.
+    await expect(page.locator('body')).toContainText('para que estas tasas signifiquen algo');
+  });
+});
+
 test.describe('Panel interno', () => {
   test('el portero rechaza una contraseña incorrecta', async ({ page }) => {
     await page.goto('/admin');
