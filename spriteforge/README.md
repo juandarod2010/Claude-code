@@ -132,7 +132,7 @@ Godot `.tres` converts them to the engine's own convention for you.
 npm test
 ```
 
-32 unit tests. The important one reconstructs every sprite pixel-for-pixel out
+34 unit tests. The important one reconstructs every sprite pixel-for-pixel out
 of the packed atlas using only the published region and margin.
 
 That proves the arithmetic. To prove the *engine agrees with it*, there is a

@@ -102,3 +102,23 @@ test('a cell size that does not divide the sheet is rejected', () => {
 test('an empty folder fails with a clear message', () => {
   assert.throws(() => build(tempDir(), tempDir()), /No PNG files found/);
 });
+
+test('--pot changes only the canvas, never the frame rectangles', () => {
+  const { dir } = fixtureDir();
+  const plain = build(dir, tempDir());
+  const pot = build(dir, tempDir(), { powerOfTwo: true });
+
+  const isPot = (n) => (n & (n - 1)) === 0;
+  assert.ok(isPot(pot.atlas.width) && isPot(pot.atlas.height));
+  // Same sprites, same placement and the same margins: a power-of-two atlas
+  // only pads the canvas, so nothing an engine reads about a frame changes.
+  assert.deepEqual(pot.sprites, plain.sprites);
+});
+
+test('the same input twice produces byte-identical output', () => {
+  const { dir } = fixtureDir();
+  const a = build(dir, tempDir(), { name: 'x' });
+  const b = build(dir, tempDir(), { name: 'x' });
+  assert.deepEqual(a.sprites, b.sprites);
+  assert.equal(a.atlas.width, b.atlas.width);
+});
