@@ -15,7 +15,7 @@ mkdir -p dist
 stage() {
   local dir="build/$1"
   mkdir -p "$dir"
-  cp -r src README.md LICENSE.txt package.json "$dir/"
+  cp -r src test scripts README.md LICENSE.txt package.json "$dir/"
   # Vendor the single runtime dependency so the tool runs with no npm install.
   mkdir -p "$dir/node_modules"
   cp -r node_modules/pngjs "$dir/node_modules/"

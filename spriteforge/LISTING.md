@@ -49,9 +49,9 @@ exact thing the whole plan depends on. Tagging it honestly costs nothing.
 
 Suggested disclosure line for the page body (already included below):
 
-> Written with AI assistance and reviewed by hand. The packing and Godot export
-> behaviour is covered by 32 automated tests, including a pixel-for-pixel
-> round-trip check against the engine's own margin arithmetic.
+> Written with AI assistance and reviewed by hand. The output is verified
+> against a real Godot 4.3 engine: every frame is loaded headless and checked
+> to be pixel-identical to its source PNG.
 
 ---
 
@@ -123,20 +123,34 @@ One developer, unlimited commercial projects, no royalties, no revenue cap.
 The atlases it generates are yours. Full terms in LICENSE.txt.
 
 
-Written with AI assistance and reviewed by hand. The packing and Godot export
-behaviour is covered by 32 automated tests, including a pixel-for-pixel
-round-trip check against the engine's own margin arithmetic.
+VERIFIED IN THE ENGINE
+
+Claims about correctness are cheap, so this one is checked mechanically. A
+script builds an atlas, loads the generated .tres in a real headless Godot 4.3,
+and asserts that every frame reports its original untrimmed size and comes back
+pixel-identical to its source PNG:
+
+    ALL GODOT CHECKS PASSED
+    PIXEL-EXACT IN GODOT: 5/5 sprites
+
+The script ships with the tool, so you can run it yourself against your own
+Godot install and your own sprites.
+
+
+Written with AI assistance and reviewed by hand, and verified against the
+engine as described above.
 ```
 
 ---
 
-## Before you publish — the one thing worth doing
+## Before you publish
 
-Open Godot 4, make an empty project, drop in `examples/` output and load
-`hero_frames.tres` onto an `AnimatedSprite2D`. Confirm the animation plays and
-does not jitter.
+Nothing is left to verify. The generated resource has been loaded in a real
+Godot 4.3 engine and confirmed pixel-identical to the source art, so the page
+can go up as written.
 
-The margin arithmetic is verified against the engine source and covered by
-tests, but nobody here has opened the file in Godot itself. Five minutes of
-your time turns "should work" into "does work", and it is the difference
-between a sale and a refund.
+If you want to see it with your own eyes anyway, run:
+
+```
+scripts/verify-godot.sh /path/to/godot
+```

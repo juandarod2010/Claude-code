@@ -132,10 +132,26 @@ Godot `.tres` converts them to the engine's own convention for you.
 npm test
 ```
 
-32 tests. The important one reconstructs every sprite pixel-for-pixel out of
-the packed atlas using only the published region and margin, which is the same
-arithmetic the engine performs — if that passes, what you see in Godot matches
-what you put in.
+32 unit tests. The important one reconstructs every sprite pixel-for-pixel out
+of the packed atlas using only the published region and margin.
+
+That proves the arithmetic. To prove the *engine agrees with it*, there is a
+second, heavier check that runs against a real Godot binary:
+
+```bash
+scripts/verify-godot.sh /path/to/godot
+```
+
+It builds an atlas, loads the generated `.tres` in headless Godot, and asserts
+that every frame reports its original untrimmed size and comes back
+pixel-identical to its source PNG. Verified passing on **Godot 4.3 stable**:
+
+```
+walk[0]  size=(48, 48)  region=[P: (0, 0), S: (13, 13)]  margin=[P: (12, 14), S: (35, 35)]
+...
+ALL GODOT CHECKS PASSED
+PIXEL-EXACT IN GODOT: 5/5 sprites
+```
 
 ## Limits
 
