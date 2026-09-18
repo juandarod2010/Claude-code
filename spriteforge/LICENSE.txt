@@ -1,0 +1,33 @@
+SpriteForge — Licence
+
+Copyright (c) 2026. All rights reserved.
+
+WHAT YOU MAY DO
+
+1. Use SpriteForge on any number of projects, personal or commercial, with no
+   royalty and no revenue cap.
+2. Ship the atlases, resources and JSON that SpriteForge generates as part of
+   your game or application. The output is yours; this licence does not claim
+   any interest in it.
+3. Modify the source for your own use, including inside your studio.
+4. Install it on every machine you personally work on.
+
+WHAT YOU MAY NOT DO
+
+1. Redistribute, resell, sublicense or publish the SpriteForge source itself,
+   modified or not, including as part of an asset pack or template.
+2. Share your copy with developers outside your organisation. Each developer
+   needs their own licence.
+3. Offer SpriteForge, or a derivative of it, as a hosted or paid service.
+
+NO WARRANTY
+
+SpriteForge is provided "as is", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose and non-infringement. In no event shall the
+author be liable for any claim, damages or other liability arising from the
+use of this software.
+
+Always keep a backup of your source art. SpriteForge only ever reads its input
+and writes to the output folder you name, but back-ups are cheap and regret is
+not.

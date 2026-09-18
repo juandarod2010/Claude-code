@@ -1,0 +1,14 @@
+{
+  "name": "spriteforge",
+  "version": "1.0.0",
+  "description": "Trim, pack and export sprite atlases with ready-to-use Godot 4 resources.",
+  "type": "module",
+  "bin": { "spriteforge": "./src/cli.js" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "node --check src/cli.js"
+  },
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "dependencies": { "pngjs": "^7.0.0" },
+  "engines": { "node": ">=18" }
+}
